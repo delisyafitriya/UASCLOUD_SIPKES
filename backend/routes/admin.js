@@ -88,9 +88,13 @@ router.post('/doctors', async (req, res) => {
 
 router.put('/doctors/:id', async (req, res) => {
     const { id } = req.params;
-    const { name, email } = req.body;
+    const { name, email, password } = req.body;
     try {
-        await pool.execute('UPDATE users SET name = ?, email = ? WHERE id = ? AND role = "doctor"', [name, email, id]);
+        if (password) {
+            await pool.execute('UPDATE users SET name = ?, email = ?, password_hash = ? WHERE id = ? AND role = "doctor"', [name, email, password, id]);
+        } else {
+            await pool.execute('UPDATE users SET name = ?, email = ? WHERE id = ? AND role = "doctor"', [name, email, id]);
+        }
         await writeAuditLog(req.user.id, 'UPDATE_DOCTOR', `Updated doctor ID ${id}`);
         res.json({ success: true, message: 'Doctor updated successfully' });
     } catch (error) {
@@ -135,9 +139,13 @@ router.post('/patients', async (req, res) => {
 
 router.put('/patients/:id', async (req, res) => {
     const { id } = req.params;
-    const { name, email } = req.body;
+    const { name, email, password } = req.body;
     try {
-        await pool.execute('UPDATE users SET name = ?, email = ? WHERE id = ? AND role = "patient"', [name, email, id]);
+        if (password) {
+            await pool.execute('UPDATE users SET name = ?, email = ?, password_hash = ? WHERE id = ? AND role = "patient"', [name, email, password, id]);
+        } else {
+            await pool.execute('UPDATE users SET name = ?, email = ? WHERE id = ? AND role = "patient"', [name, email, id]);
+        }
         await writeAuditLog(req.user.id, 'UPDATE_PATIENT', `Updated patient ID ${id}`);
         res.json({ success: true, message: 'Patient updated successfully' });
     } catch (error) {

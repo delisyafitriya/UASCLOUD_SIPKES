@@ -13,8 +13,8 @@
                 extend: {
                     colors: {
                         clinical: '#0f4c81',
-                        teal: '#008080',
-                        emerald: '#50c878',
+                        azure: '#0ea5e9',
+                        cerulean: '#3b82f6',
                         crimson: '#dc143c',
                     }
                 }
@@ -28,7 +28,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <i class="fas fa-stethoscope text-2xl mr-2 text-teal"></i>
+                    <i class="fas fa-stethoscope text-2xl mr-2 text-sky-300"></i>
                     <div class="ml-2">
                         <span class="font-bold text-xl block leading-none">SIPKES</span>
                         <span class="text-[10px] block mt-1 opacity-80 uppercase tracking-wider">Sistem Pemantauan Kesehatan</span>
@@ -36,8 +36,8 @@
                 </div>
                 <div class="flex items-center space-x-4">
                     <span id="userNameDisplay" class="font-medium"></span>
-                    <span class="bg-teal px-3 py-1 rounded-full text-xs font-semibold">Dokter</span>
-                    <button onclick="logout()" class="hover:text-teal transition-colors text-sm font-semibold"><i class="fas fa-sign-out-alt"></i> Keluar</button>
+                    <span class="bg-azure px-3 py-1 rounded-full text-xs font-semibold">Dokter</span>
+                    <button onclick="logout()" class="hover:text-sky-300 transition-colors text-sm font-semibold"><i class="fas fa-sign-out-alt"></i> Keluar</button>
                 </div>
             </div>
         </div>
@@ -49,7 +49,7 @@
                 <h2 class="text-2xl font-bold text-clinical">Antrean Pemantauan Pasien</h2>
                 <p class="text-sm text-slate-500">Pantau semua pasien aktif yang ditugaskan.</p>
             </div>
-            <button onclick="loadPatients()" class="text-teal hover:opacity-90 font-medium"><i class="fas fa-sync-alt"></i> Segarkan</button>
+            <button onclick="loadPatients()" class="text-azure hover:opacity-90 font-medium"><i class="fas fa-sync-alt"></i> Segarkan</button>
         </div>
 
         <div class="bg-white rounded-xl shadow overflow-hidden border border-slate-100">
@@ -80,8 +80,8 @@
                 
                 <!-- Left: Chart & Info -->
                 <div class="lg:col-span-2 space-y-6">
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 border-l-4 border-l-teal">
-                        <h4 class="font-bold text-clinical mb-4"><i class="fas fa-chart-area mr-2 text-teal"></i>Riwayat Kesehatan</h4>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 border-l-4 border-l-azure">
+                        <h4 class="font-bold text-clinical mb-4"><i class="fas fa-chart-area mr-2 text-azure"></i>Riwayat Kesehatan</h4>
                         <div class="h-64 relative">
                             <canvas id="modalChart"></canvas>
                         </div>
@@ -95,8 +95,8 @@
 
                 <!-- Right: Docs & Notes -->
                 <div class="space-y-6">
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 border-t-4 border-t-emerald">
-                        <h4 class="font-bold text-clinical mb-4"><i class="fas fa-folder-open mr-2 text-emerald"></i>Dokumen Medis</h4>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 border-t-4 border-t-cerulean">
+                        <h4 class="font-bold text-clinical mb-4"><i class="fas fa-folder-open mr-2 text-cerulean"></i>Dokumen Medis</h4>
                         <div id="docsList" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
                     </div>
 
@@ -105,7 +105,7 @@
                         <form id="notesForm" class="space-y-3">
                             <input type="hidden" id="selectedRecordId">
                             <p class="text-xs text-slate-500 mb-2">Pilih catatan dari daftar untuk menambahkan keterangan.</p>
-                            <textarea id="drNotes" rows="4" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-teal outline-none text-sm" placeholder="Tulis catatan klinis..."></textarea>
+                            <textarea id="drNotes" rows="4" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-azure outline-none text-sm" placeholder="Tulis catatan klinis..."></textarea>
                             <button type="submit" class="w-full bg-clinical text-white py-2 rounded shadow font-semibold hover:opacity-90 transition text-sm">Simpan Catatan</button>
                         </form>
                     </div>
@@ -148,7 +148,7 @@
                         if (latest.heart_rate > 100 || latest.heart_rate < 60 || latest.blood_pressure_sys > 140 || latest.blood_pressure_dia > 90) {
                             statusHtml = '<span class="px-2 py-1 bg-crimson/10 text-crimson rounded text-xs font-bold"><i class="fas fa-flag mr-1"></i> Waspada</span>';
                         } else {
-                            statusHtml = '<span class="px-2 py-1 bg-emerald/10 text-emerald rounded text-xs font-semibold">Normal</span>';
+                            statusHtml = '<span class="px-2 py-1 bg-cerulean/10 text-cerulean rounded text-xs font-semibold">Normal</span>';
                         }
                     }
 
@@ -182,15 +182,15 @@
                 
                 const docsList = document.getElementById('docsList');
                 docsList.innerHTML = data.documents.map(d => `
-                    <div class="flex items-center justify-between p-2 bg-slate-50 border border-slate-100 rounded text-xs hover:border-teal transition">
-                        <span class="truncate w-32 font-medium text-clinical"><i class="fas fa-file-pdf text-teal mr-2"></i>${d.document_name}</span>
+                    <div class="flex items-center justify-between p-2 bg-slate-50 border border-slate-100 rounded text-xs hover:border-azure transition">
+                        <span class="truncate w-32 font-medium text-clinical"><i class="fas fa-file-pdf text-azure mr-2"></i>${d.document_name}</span>
                         <a href="http://localhost:5000${d.storage_url}" target="_blank" class="bg-slate-200 text-clinical px-2 py-1 rounded hover:bg-clinical hover:text-white transition font-semibold">Buka</a>
                     </div>
                 `).join('') || '<p class="text-xs text-slate-400">Tidak ada dokumen.</p>';
 
                 const recordsList = document.getElementById('recordsList');
                 recordsList.innerHTML = data.records.map(r => `
-                    <div class="p-3 bg-white rounded-lg border border-slate-200 hover:border-teal transition cursor-pointer" onclick="selectRecord(${r.id}, '${(r.notes || '').replace(/'/g, "\\'")}')">
+                    <div class="p-3 bg-white rounded-lg border border-slate-200 hover:border-azure transition cursor-pointer" onclick="selectRecord(${r.id}, '${(r.notes || '').replace(/'/g, "\\'")}')">
                         <div class="flex justify-between items-center mb-1">
                             <span class="font-semibold text-sm text-clinical">${new Date(r.recorded_at).toLocaleDateString()}</span>
                             <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-600">ID: ${r.id}</span>
@@ -201,7 +201,7 @@
                             <span><b>T:</b> ${r.temperature}°C</span>
                         </div>
                         <p class="text-xs italic text-slate-500 line-clamp-1">"${r.symptoms}"</p>
-                        ${r.notes ? '<p class="text-xs text-emerald mt-1 font-semibold"><i class="fas fa-check-circle"></i> Catatan ditambahkan</p>' : ''}
+                        ${r.notes ? '<p class="text-xs text-cerulean mt-1 font-semibold"><i class="fas fa-check-circle"></i> Catatan ditambahkan</p>' : ''}
                     </div>
                 `).join('') || '<p class="text-xs text-slate-400">Tidak ada catatan.</p>';
             }

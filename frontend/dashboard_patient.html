@@ -13,8 +13,8 @@
                 extend: {
                     colors: {
                         clinical: '#0f4c81',
-                        teal: '#008080',
-                        emerald: '#50c878',
+                        azure: '#0ea5e9',
+                        cerulean: '#3b82f6',
                         crimson: '#dc143c',
                     }
                 }
@@ -28,7 +28,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <i class="fas fa-heartbeat text-2xl mr-2 text-teal"></i>
+                    <i class="fas fa-heartbeat text-2xl mr-2 text-sky-300"></i>
                     <div class="ml-2">
                         <span class="font-bold text-xl block leading-none">SIPKES</span>
                         <span class="text-[10px] block mt-1 opacity-80 uppercase tracking-wider">Sistem Pemantauan Kesehatan</span>
@@ -36,8 +36,8 @@
                 </div>
                 <div class="flex items-center space-x-4">
                     <span id="userNameDisplay" class="font-medium"></span>
-                    <span class="bg-teal px-3 py-1 rounded-full text-xs font-semibold">Pasien</span>
-                    <button onclick="logout()" class="hover:text-teal transition-colors text-sm font-semibold"><i class="fas fa-sign-out-alt"></i> Keluar</button>
+                    <span class="bg-azure px-3 py-1 rounded-full text-xs font-semibold">Pasien</span>
+                    <button onclick="logout()" class="hover:text-sky-300 transition-colors text-sm font-semibold"><i class="fas fa-sign-out-alt"></i> Keluar</button>
                 </div>
             </div>
         </div>
@@ -61,7 +61,7 @@
                     <span class="ml-2 text-sm text-slate-400">mmHg</span>
                 </div>
             </div>
-            <div class="bg-white rounded-xl shadow p-6 border-t-4 border-emerald">
+            <div class="bg-white rounded-xl shadow p-6 border-t-4 border-cerulean">
                 <p class="text-sm text-slate-500 font-semibold mb-1">Suhu Tubuh</p>
                 <div class="flex items-baseline">
                     <h2 class="text-3xl font-bold text-clinical" id="latestTemp">--</h2>
@@ -85,26 +85,26 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-slate-500">Detak Jantung</label>
-                                <input type="number" id="vrHr" required class="mt-1 w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-teal outline-none text-sm" placeholder="cth. 75">
+                                <input type="number" id="vrHr" required class="mt-1 w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-azure outline-none text-sm" placeholder="cth. 75">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-500">Suhu (°C)</label>
-                                <input type="number" step="0.1" id="vrTemp" required class="mt-1 w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-teal outline-none text-sm" placeholder="cth. 36.5">
+                                <input type="number" step="0.1" id="vrTemp" required class="mt-1 w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-azure outline-none text-sm" placeholder="cth. 36.5">
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-slate-500">Sistolik</label>
-                                <input type="number" id="vrSys" required class="mt-1 w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-teal outline-none text-sm" placeholder="120">
+                                <input type="number" id="vrSys" required class="mt-1 w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-azure outline-none text-sm" placeholder="120">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-500">Diastolik</label>
-                                <input type="number" id="vrDia" required class="mt-1 w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-teal outline-none text-sm" placeholder="80">
+                                <input type="number" id="vrDia" required class="mt-1 w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-azure outline-none text-sm" placeholder="80">
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-500">Gejala</label>
-                            <textarea id="vrSymp" rows="2" class="mt-1 w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-teal outline-none text-sm" placeholder="Bagaimana perasaan Anda hari ini?"></textarea>
+                            <textarea id="vrSymp" rows="2" class="mt-1 w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-azure outline-none text-sm" placeholder="Bagaimana perasaan Anda hari ini?"></textarea>
                         </div>
                         <button type="submit" class="w-full bg-clinical text-white py-2 rounded shadow text-sm font-semibold hover:opacity-90 transition">Simpan Data</button>
                     </form>
@@ -115,7 +115,7 @@
                     <h3 class="text-lg font-bold text-clinical mb-4"><i class="fas fa-file-medical mr-2"></i>Dokumen Medis</h3>
                     
                     <div id="dropZone" class="border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 rounded-lg p-6 text-center transition cursor-pointer mb-4">
-                        <i class="fas fa-cloud-upload-alt text-3xl text-teal mb-2"></i>
+                        <i class="fas fa-cloud-upload-alt text-3xl text-azure mb-2"></i>
                         <p class="text-xs text-slate-500 font-medium">Seret & lepas file atau klik untuk mengunggah</p>
                         <input type="file" id="fileInput" class="hidden">
                     </div>
@@ -144,7 +144,7 @@
                         </div>
                         <div>
                             <h3 class="font-bold text-sm">Asisten Kesehatan AI</h3>
-                            <p class="text-[10px] text-teal">Online | Didukung oleh Hugging Face Qwen</p>
+                            <p class="text-[10px] text-sky-300">Online | Didukung oleh Hugging Face Qwen</p>
                         </div>
                     </div>
                     
@@ -157,7 +157,7 @@
                     </div>
 
                     <div class="p-3 bg-white border-t flex items-center">
-                        <input type="text" id="chatInput" class="flex-1 bg-slate-100 border-none rounded-full px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-teal" placeholder="Ketik gejala atau pertanyaan Anda...">
+                        <input type="text" id="chatInput" class="flex-1 bg-slate-100 border-none rounded-full px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-azure" placeholder="Ketik gejala atau pertanyaan Anda...">
                         <button onclick="sendChat()" class="ml-2 w-10 h-10 bg-clinical shadow-md text-white rounded-full flex items-center justify-center hover:opacity-90 transition">
                             <i class="fas fa-paper-plane text-sm"></i>
                         </button>
@@ -221,11 +221,11 @@
             // Color coding
             const hrCard = document.getElementById('hrCard');
             if (latest.heart_rate > 100 || latest.heart_rate < 60) hrCard.className = "bg-crimson/10 text-crimson rounded-xl shadow p-6 border-t-4 border-crimson";
-            else hrCard.className = "bg-white text-clinical rounded-xl shadow p-6 border-t-4 border-emerald";
+            else hrCard.className = "bg-white text-clinical rounded-xl shadow p-6 border-t-4 border-cerulean";
 
             const bpCard = document.getElementById('bpCard');
             if (latest.blood_pressure_sys > 140 || latest.blood_pressure_dia > 90) bpCard.className = "bg-crimson/10 text-crimson rounded-xl shadow p-6 border-t-4 border-crimson";
-            else bpCard.className = "bg-white text-clinical rounded-xl shadow p-6 border-t-4 border-emerald";
+            else bpCard.className = "bg-white text-clinical rounded-xl shadow p-6 border-t-4 border-cerulean";
 
             // Chart
             const dates = records.map(r => new Date(r.recorded_at).toLocaleDateString()).reverse();
@@ -295,9 +295,9 @@
         function renderDocs(docs) {
             const list = document.getElementById('docList');
             list.innerHTML = docs.map(d => `
-                <div class="flex items-center justify-between p-3 bg-white border border-slate-100 shadow-sm rounded-lg text-sm mb-2 hover:border-teal transition">
+                <div class="flex items-center justify-between p-3 bg-white border border-slate-100 shadow-sm rounded-lg text-sm mb-2 hover:border-azure transition">
                     <div class="flex items-center overflow-hidden">
-                        <i class="fas fa-file-pdf text-teal text-lg mr-3"></i>
+                        <i class="fas fa-file-pdf text-azure text-lg mr-3"></i>
                         <span class="truncate text-clinical font-semibold w-32" title="${d.document_name}">${d.document_name}</span>
                     </div>
                     <a href="http://localhost:5000${d.storage_url}" target="_blank" class="text-xs bg-slate-100 text-clinical px-3 py-1 rounded hover:bg-clinical hover:text-white transition font-semibold">Buka</a>
@@ -337,7 +337,7 @@
 
             // Add loading
             const loadId = 'loading-' + Date.now();
-            chatWindow.insertAdjacentHTML('beforeend', `<div id="${loadId}" class="flex justify-start"><div class="p-3 text-sm rounded-xl bg-white border border-slate-200 rounded-tl-none"><i class="fas fa-ellipsis-h animate-pulse text-teal"></i></div></div>`);
+            chatWindow.insertAdjacentHTML('beforeend', `<div id="${loadId}" class="flex justify-start"><div class="p-3 text-sm rounded-xl bg-white border border-slate-200 rounded-tl-none"><i class="fas fa-ellipsis-h animate-pulse text-azure"></i></div></div>`);
             chatWindow.scrollTop = chatWindow.scrollHeight;
 
             try {
