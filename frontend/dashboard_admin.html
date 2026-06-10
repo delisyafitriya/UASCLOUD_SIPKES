@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - Sistem Pemantauan Kesehatan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        clinical: '#0f4c81',
+                        teal: '#008080',
+                        emerald: '#50c878',
+                        crimson: '#dc143c',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased flex h-screen overflow-hidden">
+    
+    <!-- Sidebar -->
+    <aside class="w-64 bg-clinical text-white flex flex-col h-full shadow-2xl z-10">
+        <div class="h-16 flex items-center px-6 border-b border-white/10">
+            <i class="fas fa-shield-alt text-2xl mr-2"></i>
+            <div class="ml-2">
+                <span class="font-bold text-lg tracking-wide block leading-none">SIPKES</span>
+                <span class="text-[10px] text-teal block mt-1 uppercase tracking-wider font-semibold">Portal Admin</span>
+            </div>
+        </div>
+        <div class="p-6 flex-1">
+            <div class="mb-8">
+                <p class="text-xs text-teal uppercase font-bold tracking-wider mb-2">Menu Utama</p>
+                <ul class="space-y-2">
+                    <li><a href="#" class="flex items-center px-4 py-3 bg-white/10 rounded-lg text-sm font-semibold transition hover:bg-white/20"><i class="fas fa-chart-pie w-6"></i> Ringkasan</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="p-4 border-t border-white/10">
+            <div class="flex items-center mb-4 px-2">
+                <div class="w-8 h-8 rounded-full bg-white text-clinical flex items-center justify-center font-bold mr-3"><i class="fas fa-user-shield"></i></div>
+                <div>
+                    <p class="text-sm font-bold leading-tight" id="userNameDisplay"></p>
+                    <p class="text-[10px] text-teal">Admin Sistem</p>
+                </div>
+            </div>
+            <button onclick="logout()" class="w-full bg-crimson hover:opacity-90 text-white py-2 rounded text-sm font-semibold transition"><i class="fas fa-sign-out-alt mr-2"></i>Keluar</button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-slate-50 p-8 relative">
+        
+        <!-- Metrics -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-clinical mb-6">Ringkasan Sistem</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between border-l-4 border-l-clinical">
+                    <div>
+                        <p class="text-sm text-slate-500 font-semibold mb-1">Pasien Aktif</p>
+                        <h3 class="text-3xl font-bold text-clinical" id="mPatients">0</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-slate-100 text-clinical rounded-full flex items-center justify-center text-xl"><i class="fas fa-users"></i></div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between border-l-4 border-l-teal">
+                    <div>
+                        <p class="text-sm text-slate-500 font-semibold mb-1">Dokter Aktif</p>
+                        <h3 class="text-3xl font-bold text-teal" id="mDoctors">0</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-slate-100 text-teal rounded-full flex items-center justify-center text-xl"><i class="fas fa-user-md"></i></div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between border-l-4 border-l-emerald">
+                    <div>
+                        <p class="text-sm text-slate-500 font-semibold mb-1">Total Dokumen</p>
+                        <h3 class="text-3xl font-bold text-emerald" id="mDocs">0</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-slate-100 text-emerald rounded-full flex items-center justify-center text-xl"><i class="fas fa-file-medical"></i></div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between border-l-4 border-l-clinical">
+                    <div>
+                        <p class="text-sm text-slate-500 font-semibold mb-1">Kueri AI (Hari Ini)</p>
+                        <h3 class="text-3xl font-bold text-clinical" id="mAi">0</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-slate-100 text-clinical rounded-full flex items-center justify-center text-xl"><i class="fas fa-robot"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Doctor Management -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[400px]">
+                <div class="p-5 border-b flex justify-between items-center bg-slate-50">
+                    <h3 class="font-bold text-clinical"><i class="fas fa-user-md mr-2"></i>Manajemen Dokter</h3>
+                    <button onclick="openDoctorModal()" class="bg-clinical hover:opacity-90 text-white text-xs px-3 py-1.5 rounded font-semibold transition shadow-sm"><i class="fas fa-plus mr-1"></i>Tambah Dokter</button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-2 divide-y divide-slate-100" id="doctorList">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+
+            <!-- Patient Management -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[400px]">
+                <div class="p-5 border-b flex justify-between items-center bg-slate-50">
+                    <h3 class="font-bold text-clinical"><i class="fas fa-users mr-2"></i>Manajemen Pasien</h3>
+                    <button onclick="openPatientModal()" class="bg-clinical hover:opacity-90 text-white text-xs px-3 py-1.5 rounded font-semibold transition shadow-sm"><i class="fas fa-plus mr-1"></i>Tambah Pasien</button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-2 divide-y divide-slate-100" id="patientList">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Logs -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[300px]">
+            <div class="p-5 border-b flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-clinical"><i class="fas fa-history mr-2"></i>Log Keamanan Sistem</h3>
+                <span class="text-[10px] bg-emerald/20 text-emerald px-2 py-1 rounded uppercase font-bold tracking-wider animate-pulse border border-emerald">Langsung</span>
+            </div>
+            <div class="flex-1 overflow-y-auto bg-slate-900 p-4 font-mono text-xs text-emerald space-y-1" id="auditList">
+                <!-- Populated via JS -->
+            </div>
+        </div>
+        
+        <!-- Add/Edit Doctor Modal -->
+        <div id="doctorModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+                <div class="bg-clinical text-white p-4 flex justify-between items-center">
+                    <h3 class="font-bold" id="docModalTitle">Tambah Dokter Baru</h3>
+                    <button onclick="closeDoctorModal()" class="hover:text-slate-300"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="p-6">
+                    <form id="doctorForm" class="space-y-4">
+                        <input type="hidden" id="docId">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Nama Lengkap</label>
+                            <input type="text" id="docName" required class="w-full px-3 py-2 border rounded focus:ring-teal focus:border-teal outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                            <input type="email" id="docEmail" required class="w-full px-3 py-2 border rounded focus:ring-teal focus:border-teal outline-none">
+                        </div>
+                        <div id="docPassWrapper">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Kata Sandi</label>
+                            <input type="password" id="docPassword" class="w-full px-3 py-2 border rounded focus:ring-teal focus:border-teal outline-none">
+                            <p class="text-xs text-slate-400 mt-1">Isi hanya untuk membuat dokter baru.</p>
+                        </div>
+                        <div class="pt-4 flex space-x-3">
+                            <button type="button" onclick="closeDoctorModal()" class="flex-1 py-2 bg-slate-100 text-slate-700 rounded font-semibold hover:bg-slate-200 transition">Batal</button>
+                            <button type="submit" class="flex-1 py-2 bg-clinical text-white rounded font-semibold hover:opacity-90 transition">Simpan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add/Edit Patient Modal -->
+        <div id="patientModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+                <div class="bg-clinical text-white p-4 flex justify-between items-center">
+                    <h3 class="font-bold" id="patModalTitle">Tambah Pasien Baru</h3>
+                    <button onclick="closePatientModal()" class="hover:text-slate-300"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="p-6">
+                    <form id="patientForm" class="space-y-4">
+                        <input type="hidden" id="patId">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Nama Lengkap</label>
+                            <input type="text" id="patName" required class="w-full px-3 py-2 border rounded focus:ring-clinical focus:border-clinical outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                            <input type="email" id="patEmail" required class="w-full px-3 py-2 border rounded focus:ring-clinical focus:border-clinical outline-none">
+                        </div>
+                        <div id="patPassWrapper">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Kata Sandi</label>
+                            <input type="password" id="patPassword" class="w-full px-3 py-2 border rounded focus:ring-clinical focus:border-clinical outline-none">
+                            <p class="text-xs text-slate-400 mt-1">Isi hanya untuk membuat pasien baru.</p>
+                        </div>
+                        <div class="pt-4 flex space-x-3">
+                            <button type="button" onclick="closePatientModal()" class="flex-1 py-2 bg-slate-100 text-slate-700 rounded font-semibold hover:bg-slate-200 transition">Batal</button>
+                            <button type="submit" class="flex-1 py-2 bg-clinical text-white rounded font-semibold hover:opacity-90 transition">Simpan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user'));
+        
+        if (!token || user.role !== 'admin') window.location.href = 'login.html';
+        document.getElementById('userNameDisplay').textContent = user.name;
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        const apiHeaders = { 'Authorization': `Bearer ${token}` };
+
+        async function loadAdminData() {
+            try {
+                const [metricsRes, doctorsRes, patientsRes, logsRes] = await Promise.all([
+                    fetch('http://localhost:5000/api/admin/metrics', { headers: apiHeaders }),
+                    fetch('http://localhost:5000/api/admin/doctors', { headers: apiHeaders }),
+                    fetch('http://localhost:5000/api/admin/patients', { headers: apiHeaders }),
+                    fetch('http://localhost:5000/api/admin/audit-logs', { headers: apiHeaders })
+                ]);
+                
+                const metrics = await metricsRes.json();
+                const doctors = await doctorsRes.json();
+                const patients = await patientsRes.json();
+                const logs = await logsRes.json();
+
+                if (metrics.success) {
+                    document.getElementById('mPatients').textContent = metrics.metrics.total_patients;
+                    document.getElementById('mDoctors').textContent = metrics.metrics.active_doctors;
+                    document.getElementById('mDocs').textContent = metrics.metrics.total_documents;
+                    document.getElementById('mAi').textContent = metrics.metrics.ai_requests_today;
+                }
+
+                if (doctors.success) {
+                    document.getElementById('doctorList').innerHTML = doctors.doctors.map(d => `
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-slate-50 transition border-l-4 ${d.status === 'pending' ? 'border-l-crimson' : 'border-l-emerald'}">
+                            <div class="mb-2 sm:mb-0">
+                                <p class="font-bold text-sm text-clinical">${d.name}</p>
+                                <p class="text-xs text-slate-500">${d.email}</p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                ${d.status === 'pending' ? 
+                                    `<button onclick="updateDoctorStatus(${d.id}, 'approve')" class="text-xs bg-emerald hover:opacity-90 text-white px-2 py-1 rounded shadow transition font-semibold" title="Setujui"><i class="fas fa-check"></i> Setuju</button>` 
+                                    : 
+                                    `<button onclick="updateDoctorStatus(${d.id}, 'suspend')" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-1 rounded shadow transition font-semibold" title="Tangguhkan"><i class="fas fa-ban"></i> Tahan</button>`
+                                }
+                                <button onclick="openDoctorModal(${d.id}, '${d.name}', '${d.email}')" class="text-xs bg-clinical hover:opacity-90 text-white px-2 py-1 rounded shadow transition font-semibold"><i class="fas fa-edit"></i> Edit</button>
+                                <button onclick="deleteDoctor(${d.id})" class="text-xs bg-crimson hover:opacity-90 text-white px-2 py-1 rounded shadow transition font-semibold"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                if (patients.success) {
+                    document.getElementById('patientList').innerHTML = patients.patients.map(p => `
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-slate-50 transition border-l-4 border-l-clinical">
+                            <div class="mb-2 sm:mb-0">
+                                <p class="font-bold text-sm text-clinical">${p.name}</p>
+                                <p class="text-xs text-slate-500">${p.email}</p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="openPatientModal(${p.id}, '${p.name}', '${p.email}')" class="text-xs bg-clinical hover:opacity-90 text-white px-2 py-1 rounded shadow transition font-semibold"><i class="fas fa-edit"></i> Edit</button>
+                                <button onclick="deletePatient(${p.id})" class="text-xs bg-crimson hover:opacity-90 text-white px-2 py-1 rounded shadow transition font-semibold"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                if (logs.success) {
+                    document.getElementById('auditList').innerHTML = logs.logs.map(l => {
+                        const time = new Date(l.timestamp).toISOString().replace('T', ' ').substring(0, 19);
+                        const userRole = l.user_role ? `[${l.user_role.toUpperCase()}]` : '[SISTEM]';
+                        return `<div class="mb-1"><span class="text-slate-500">[${time}]</span> <span class="text-teal">${userRole} ${l.user_name || 'Sistem'}</span> <span class="text-clinical font-bold">${l.action}</span>: <span class="text-emerald">${l.description}</span></div>`;
+                    }).join('');
+                }
+
+            } catch (error) {
+                console.error("Kesalahan memuat data admin", error);
+            }
+        }
+
+        // --- Doctor Actions ---
+        async function updateDoctorStatus(id, action) {
+            try {
+                const res = await fetch(`http://localhost:5000/api/admin/doctors/${id}/${action}`, {
+                    method: 'POST',
+                    headers: apiHeaders
+                });
+                if(res.ok) loadAdminData();
+            } catch (err) { alert('Aksi gagal'); }
+        }
+
+        async function deleteDoctor(id) {
+            if(!confirm('Yakin ingin menghapus dokter ini? Semua data rekam medis yang terikat mungkin akan terdampak.')) return;
+            try {
+                const res = await fetch(`http://localhost:5000/api/admin/doctors/${id}`, {
+                    method: 'DELETE',
+                    headers: apiHeaders
+                });
+                if(res.ok) loadAdminData();
+                else alert('Gagal menghapus dokter');
+            } catch (err) { alert('Aksi gagal'); }
+        }
+
+        function openDoctorModal(id = null, name = '', email = '') {
+            document.getElementById('docId').value = id || '';
+            document.getElementById('docName').value = name;
+            document.getElementById('docEmail').value = email;
+            
+            document.getElementById('docModalTitle').textContent = id ? 'Edit Dokter' : 'Tambah Dokter Baru';
+            document.getElementById('docPassWrapper').style.display = id ? 'none' : 'block';
+            document.getElementById('docPassword').required = !id;
+            
+            document.getElementById('doctorModal').classList.remove('hidden');
+        }
+
+        function closeDoctorModal() {
+            document.getElementById('doctorModal').classList.add('hidden');
+            document.getElementById('doctorForm').reset();
+        }
+
+        document.getElementById('doctorForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('docId').value;
+            const name = document.getElementById('docName').value;
+            const email = document.getElementById('docEmail').value;
+            const password = document.getElementById('docPassword').value;
+
+            const url = id ? `http://localhost:5000/api/admin/doctors/${id}` : 'http://localhost:5000/api/admin/doctors';
+            const method = id ? 'PUT' : 'POST';
+            const body = id ? { name, email } : { name, email, password };
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: { ...apiHeaders, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if(data.success) {
+                    closeDoctorModal();
+                    loadAdminData();
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert('Gagal menyimpan data');
+            }
+        });
+
+        // --- Patient Actions ---
+        async function deletePatient(id) {
+            if(!confirm('Yakin ingin menghapus pasien ini? Peringatan: Seluruh data rekam medis dan histori chat pasien ini akan terhapus juga secara permanen.')) return;
+            try {
+                const res = await fetch(`http://localhost:5000/api/admin/patients/${id}`, {
+                    method: 'DELETE',
+                    headers: apiHeaders
+                });
+                if(res.ok) loadAdminData();
+                else alert('Gagal menghapus pasien');
+            } catch (err) { alert('Aksi gagal'); }
+        }
+
+        function openPatientModal(id = null, name = '', email = '') {
+            document.getElementById('patId').value = id || '';
+            document.getElementById('patName').value = name;
+            document.getElementById('patEmail').value = email;
+            
+            document.getElementById('patModalTitle').textContent = id ? 'Edit Pasien' : 'Tambah Pasien Baru';
+            document.getElementById('patPassWrapper').style.display = id ? 'none' : 'block';
+            document.getElementById('patPassword').required = !id;
+            
+            document.getElementById('patientModal').classList.remove('hidden');
+        }
+
+        function closePatientModal() {
+            document.getElementById('patientModal').classList.add('hidden');
+            document.getElementById('patientForm').reset();
+        }
+
+        document.getElementById('patientForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('patId').value;
+            const name = document.getElementById('patName').value;
+            const email = document.getElementById('patEmail').value;
+            const password = document.getElementById('patPassword').value;
+
+            const url = id ? `http://localhost:5000/api/admin/patients/${id}` : 'http://localhost:5000/api/admin/patients';
+            const method = id ? 'PUT' : 'POST';
+            const body = id ? { name, email } : { name, email, password };
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: { ...apiHeaders, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if(data.success) {
+                    closePatientModal();
+                    loadAdminData();
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert('Gagal menyimpan data');
+            }
+        });
+
+
+        loadAdminData();
+        setInterval(loadAdminData, 10000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar - Sistem Pemantauan Kesehatan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        clinical: '#0f4c81',
+                        teal: '#008080',
+                        emerald: '#50c878',
+                        crimson: '#dc143c',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 flex items-center justify-center min-h-screen py-10">
+    <div class="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border-t-4 border-teal">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-clinical tracking-wider">SIPKES</h1>
+            <p class="text-slate-600 font-semibold mb-3">Sistem Pemantauan Kesehatan</p>
+            <p class="text-slate-500 text-sm">Bergabung dan buat akun baru Anda</p>
+        </div>
+
+        <form id="registerForm" class="space-y-5">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Nama Lengkap</label>
+                <input type="text" id="name" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-teal transition-all outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Alamat Email</label>
+                <input type="email" id="email" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-teal transition-all outline-none">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Kata Sandi</label>
+                <div class="relative">
+                    <input type="password" id="password" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-teal transition-all outline-none pr-10">
+                    <button type="button" onclick="togglePassword('password', 'eyeIcon')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-teal focus:outline-none">
+                        <i class="fas fa-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="message" class="text-sm hidden font-medium text-center py-2 rounded-lg"></div>
+
+            <button type="submit" class="w-full py-3 px-4 rounded-lg shadow-md text-white font-semibold bg-clinical hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-clinical transition-all">
+                Daftar
+            </button>
+        </form>
+
+        <p class="mt-6 text-center text-sm text-slate-600">
+            Sudah punya akun? <a href="login.html" class="text-clinical hover:text-teal font-semibold transition-colors">Masuk di sini</a>
+        </p>
+    </div>
+
+    <script>
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const role = 'patient'; // Forced to patient
+            const msgDiv = document.getElementById('message');
+
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password, role })
+                });
+
+                const data = await response.json();
+
+                msgDiv.classList.remove('hidden', 'bg-red-50', 'text-crimson', 'bg-emerald-50', 'text-emerald-700');
+                if (data.success) {
+                    msgDiv.textContent = 'Registrasi berhasil! Anda sekarang dapat masuk.';
+                    msgDiv.classList.add('bg-emerald-50', 'text-emerald-700');
+                    document.getElementById('registerForm').reset();
+                } else {
+                    msgDiv.textContent = data.message;
+                    msgDiv.classList.add('bg-red-50', 'text-crimson');
+                }
+            } catch (error) {
+                msgDiv.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-700');
+                msgDiv.textContent = 'Gagal terhubung ke server.';
+                msgDiv.classList.add('bg-red-50', 'text-crimson');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Dokter - Sistem Pemantauan Kesehatan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        clinical: '#0f4c81',
+                        teal: '#008080',
+                        emerald: '#50c878',
+                        crimson: '#dc143c',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased">
+    <!-- Navbar -->
+    <nav class="bg-clinical text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-stethoscope text-2xl mr-2 text-teal"></i>
+                    <div class="ml-2">
+                        <span class="font-bold text-xl block leading-none">SIPKES</span>
+                        <span class="text-[10px] block mt-1 opacity-80 uppercase tracking-wider">Sistem Pemantauan Kesehatan</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="userNameDisplay" class="font-medium"></span>
+                    <span class="bg-teal px-3 py-1 rounded-full text-xs font-semibold">Dokter</span>
+                    <button onclick="logout()" class="hover:text-teal transition-colors text-sm font-semibold"><i class="fas fa-sign-out-alt"></i> Keluar</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <div class="flex justify-between items-end mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-clinical">Antrean Pemantauan Pasien</h2>
+                <p class="text-sm text-slate-500">Pantau semua pasien aktif yang ditugaskan.</p>
+            </div>
+            <button onclick="loadPatients()" class="text-teal hover:opacity-90 font-medium"><i class="fas fa-sync-alt"></i> Segarkan</button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow overflow-hidden border border-slate-100">
+            <table class="w-full text-left text-sm text-slate-600">
+                <thead class="bg-slate-100 text-slate-700 uppercase font-semibold text-xs border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-4">Nama Pasien</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="patientTableBody" class="divide-y divide-slate-100">
+                    <!-- Populated via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="patientModal" class="fixed inset-0 bg-slate-900 bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="bg-clinical px-6 py-4 flex justify-between items-center text-white border-b border-white/10">
+                <h3 class="text-xl font-bold" id="modalTitle">Detail Pasien</h3>
+                <button onclick="closeModal()" class="text-white hover:text-slate-300 text-2xl leading-none">&times;</button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1 bg-slate-50 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Left: Chart & Info -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 border-l-4 border-l-teal">
+                        <h4 class="font-bold text-clinical mb-4"><i class="fas fa-chart-area mr-2 text-teal"></i>Riwayat Kesehatan</h4>
+                        <div class="h-64 relative">
+                            <canvas id="modalChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 border-l-4 border-l-clinical">
+                        <h4 class="font-bold text-clinical mb-4"><i class="fas fa-clipboard-list mr-2 text-clinical"></i>Catatan Terbaru</h4>
+                        <div class="space-y-3" id="recordsList"></div>
+                    </div>
+                </div>
+
+                <!-- Right: Docs & Notes -->
+                <div class="space-y-6">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 border-t-4 border-t-emerald">
+                        <h4 class="font-bold text-clinical mb-4"><i class="fas fa-folder-open mr-2 text-emerald"></i>Dokumen Medis</h4>
+                        <div id="docsList" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 border-t-4 border-t-clinical">
+                        <h4 class="font-bold text-clinical mb-4"><i class="fas fa-prescription mr-2 text-clinical"></i>E-Resep & Catatan</h4>
+                        <form id="notesForm" class="space-y-3">
+                            <input type="hidden" id="selectedRecordId">
+                            <p class="text-xs text-slate-500 mb-2">Pilih catatan dari daftar untuk menambahkan keterangan.</p>
+                            <textarea id="drNotes" rows="4" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-teal outline-none text-sm" placeholder="Tulis catatan klinis..."></textarea>
+                            <button type="submit" class="w-full bg-clinical text-white py-2 rounded shadow font-semibold hover:opacity-90 transition text-sm">Simpan Catatan</button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user'));
+        
+        if (!token || user.role !== 'doctor') window.location.href = 'login.html';
+        document.getElementById('userNameDisplay').textContent = 'Dr. ' + user.name;
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        const apiHeaders = { 'Authorization': `Bearer ${token}` };
+        let chartInstance = null;
+
+        async function loadPatients() {
+            const res = await fetch('http://localhost:5000/api/doctor/patients', { headers: apiHeaders });
+            const data = await res.json();
+            if (data.success) {
+                const tbody = document.getElementById('patientTableBody');
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-slate-400">Memuat data pasien...</td></tr>';
+                
+                let rowsHtml = '';
+                for (let p of data.patients) {
+                    const rRes = await fetch(`http://localhost:5000/api/doctor/patient/${p.id}`, { headers: apiHeaders });
+                    const rData = await rRes.json();
+                    let statusHtml = '<span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-semibold">Tidak Ada Data</span>';
+                    
+                    if (rData.records && rData.records.length > 0) {
+                        const latest = rData.records[0];
+                        if (latest.heart_rate > 100 || latest.heart_rate < 60 || latest.blood_pressure_sys > 140 || latest.blood_pressure_dia > 90) {
+                            statusHtml = '<span class="px-2 py-1 bg-crimson/10 text-crimson rounded text-xs font-bold"><i class="fas fa-flag mr-1"></i> Waspada</span>';
+                        } else {
+                            statusHtml = '<span class="px-2 py-1 bg-emerald/10 text-emerald rounded text-xs font-semibold">Normal</span>';
+                        }
+                    }
+
+                    rowsHtml += `
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-50 last:border-0">
+                            <td class="px-6 py-4 font-medium text-slate-800">${p.name} <br><span class="text-xs text-slate-400">${p.email}</span></td>
+                            <td class="px-6 py-4">${statusHtml}</td>
+                            <td class="px-6 py-4 text-center">
+                                <button onclick="openPatient(${p.id}, '${p.name}')" class="bg-clinical text-white px-3 py-1.5 rounded shadow-sm text-xs font-semibold hover:opacity-90 transition">Lihat Detail</button>
+                            </td>
+                        </tr>
+                    `;
+                }
+                tbody.innerHTML = rowsHtml || '<tr><td colspan="3" class="text-center py-4 text-slate-400">Tidak ditemukan pasien aktif.</td></tr>';
+            }
+        }
+
+        async function openPatient(id, name) {
+            document.getElementById('modalTitle').textContent = `Pasien: ${name}`;
+            document.getElementById('patientModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            
+            document.getElementById('drNotes').value = '';
+            document.getElementById('selectedRecordId').value = '';
+
+            const res = await fetch(`http://localhost:5000/api/doctor/patient/${id}`, { headers: apiHeaders });
+            const data = await res.json();
+            
+            if (data.success) {
+                renderModalChart(data.records);
+                
+                const docsList = document.getElementById('docsList');
+                docsList.innerHTML = data.documents.map(d => `
+                    <div class="flex items-center justify-between p-2 bg-slate-50 border border-slate-100 rounded text-xs hover:border-teal transition">
+                        <span class="truncate w-32 font-medium text-clinical"><i class="fas fa-file-pdf text-teal mr-2"></i>${d.document_name}</span>
+                        <a href="http://localhost:5000${d.storage_url}" target="_blank" class="bg-slate-200 text-clinical px-2 py-1 rounded hover:bg-clinical hover:text-white transition font-semibold">Buka</a>
+                    </div>
+                `).join('') || '<p class="text-xs text-slate-400">Tidak ada dokumen.</p>';
+
+                const recordsList = document.getElementById('recordsList');
+                recordsList.innerHTML = data.records.map(r => `
+                    <div class="p-3 bg-white rounded-lg border border-slate-200 hover:border-teal transition cursor-pointer" onclick="selectRecord(${r.id}, '${(r.notes || '').replace(/'/g, "\\'")}')">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-semibold text-sm text-clinical">${new Date(r.recorded_at).toLocaleDateString()}</span>
+                            <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-600">ID: ${r.id}</span>
+                        </div>
+                        <div class="text-xs text-slate-600 flex space-x-4 mb-2 bg-slate-50 p-1 rounded">
+                            <span><b>HR:</b> ${r.heart_rate}</span>
+                            <span><b>BP:</b> ${r.blood_pressure_sys}/${r.blood_pressure_dia}</span>
+                            <span><b>T:</b> ${r.temperature}°C</span>
+                        </div>
+                        <p class="text-xs italic text-slate-500 line-clamp-1">"${r.symptoms}"</p>
+                        ${r.notes ? '<p class="text-xs text-emerald mt-1 font-semibold"><i class="fas fa-check-circle"></i> Catatan ditambahkan</p>' : ''}
+                    </div>
+                `).join('') || '<p class="text-xs text-slate-400">Tidak ada catatan.</p>';
+            }
+        }
+
+        function renderModalChart(records) {
+            const dates = records.map(r => new Date(r.recorded_at).toLocaleDateString()).reverse();
+            const hrs = records.map(r => r.heart_rate).reverse();
+            const sys = records.map(r => r.blood_pressure_sys).reverse();
+            
+            const ctx = document.getElementById('modalChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+            
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        { label: 'Detak Jantung', data: hrs, borderColor: '#008080', backgroundColor: '#00808022', fill: true, tension: 0.4 },
+                        { label: 'Sistolik', data: sys, borderColor: '#dc143c', backgroundColor: 'transparent', borderDash: [5, 5], tension: 0.4 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function selectRecord(id, notes) {
+            document.getElementById('selectedRecordId').value = id;
+            document.getElementById('drNotes').value = notes || '';
+        }
+
+        document.getElementById('notesForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('selectedRecordId').value;
+            const notes = document.getElementById('drNotes').value;
+            if (!id) return alert('Pilih salah satu catatan dari Riwayat Kesehatan terlebih dahulu.');
+
+            try {
+                const res = await fetch(`http://localhost:5000/api/doctor/record/${id}/notes`, {
+                    method: 'POST',
+                    headers: { ...apiHeaders, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ notes })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    alert('Catatan berhasil disimpan.');
+                    closeModal();
+                }
+            } catch (err) {
+                alert('Gagal menyimpan catatan.');
+            }
+        });
+
+        function closeModal() {
+            document.getElementById('patientModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        loadPatients();
+    </script>
+</body>
+</html>

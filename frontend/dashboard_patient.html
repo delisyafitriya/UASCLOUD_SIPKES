@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Pasien - Sistem Pemantauan Kesehatan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        clinical: '#0f4c81',
+                        teal: '#008080',
+                        emerald: '#50c878',
+                        crimson: '#dc143c',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased">
+    <!-- Navbar -->
+    <nav class="bg-clinical text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-heartbeat text-2xl mr-2 text-teal"></i>
+                    <div class="ml-2">
+                        <span class="font-bold text-xl block leading-none">SIPKES</span>
+                        <span class="text-[10px] block mt-1 opacity-80 uppercase tracking-wider">Sistem Pemantauan Kesehatan</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="userNameDisplay" class="font-medium"></span>
+                    <span class="bg-teal px-3 py-1 rounded-full text-xs font-semibold">Pasien</span>
+                    <button onclick="logout()" class="hover:text-teal transition-colors text-sm font-semibold"><i class="fas fa-sign-out-alt"></i> Keluar</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        
+        <!-- Snapshot Widget -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-white rounded-xl shadow p-6 border-t-4" id="hrCard">
+                <p class="text-sm text-slate-500 font-semibold mb-1">Detak Jantung</p>
+                <div class="flex items-baseline">
+                    <h2 class="text-3xl font-bold" id="latestHr">--</h2>
+                    <span class="ml-2 text-sm text-slate-400">bpm</span>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6 border-t-4" id="bpCard">
+                <p class="text-sm text-slate-500 font-semibold mb-1">Tekanan Darah</p>
+                <div class="flex items-baseline">
+                    <h2 class="text-3xl font-bold" id="latestBp">--/--</h2>
+                    <span class="ml-2 text-sm text-slate-400">mmHg</span>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6 border-t-4 border-emerald">
+                <p class="text-sm text-slate-500 font-semibold mb-1">Suhu Tubuh</p>
+                <div class="flex items-baseline">
+                    <h2 class="text-3xl font-bold text-clinical" id="latestTemp">--</h2>
+                    <span class="ml-2 text-sm text-slate-400">°C</span>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6 border-t-4 border-clinical">
+                <p class="text-sm text-slate-500 font-semibold mb-1">Terakhir Diperbarui</p>
+                <h2 class="text-lg font-bold text-clinical mt-2" id="lastUpdate">--</h2>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column: Vitals Form & Docs -->
+            <div class="space-y-6">
+                <!-- Vitals Form -->
+                <div class="bg-white rounded-xl shadow p-6 border border-slate-100">
+                    <h3 class="text-lg font-bold text-clinical mb-4"><i class="fas fa-plus-circle mr-2"></i>Catat Tanda Vital</h3>
+                    <form id="vitalsForm" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500">Detak Jantung</label>
+                                <input type="number" id="vrHr" required class="mt-1 w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-teal outline-none text-sm" placeholder="cth. 75">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500">Suhu (°C)</label>
+                                <input type="number" step="0.1" id="vrTemp" required class="mt-1 w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-teal outline-none text-sm" placeholder="cth. 36.5">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500">Sistolik</label>
+                                <input type="number" id="vrSys" required class="mt-1 w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-teal outline-none text-sm" placeholder="120">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500">Diastolik</label>
+                                <input type="number" id="vrDia" required class="mt-1 w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-teal outline-none text-sm" placeholder="80">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500">Gejala</label>
+                            <textarea id="vrSymp" rows="2" class="mt-1 w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-teal outline-none text-sm" placeholder="Bagaimana perasaan Anda hari ini?"></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-clinical text-white py-2 rounded shadow text-sm font-semibold hover:opacity-90 transition">Simpan Data</button>
+                    </form>
+                </div>
+
+                <!-- Document Upload -->
+                <div class="bg-white rounded-xl shadow p-6 border border-slate-100">
+                    <h3 class="text-lg font-bold text-clinical mb-4"><i class="fas fa-file-medical mr-2"></i>Dokumen Medis</h3>
+                    
+                    <div id="dropZone" class="border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 rounded-lg p-6 text-center transition cursor-pointer mb-4">
+                        <i class="fas fa-cloud-upload-alt text-3xl text-teal mb-2"></i>
+                        <p class="text-xs text-slate-500 font-medium">Seret & lepas file atau klik untuk mengunggah</p>
+                        <input type="file" id="fileInput" class="hidden">
+                    </div>
+                    
+                    <div class="max-h-40 overflow-y-auto space-y-2 pr-1" id="docList">
+                        <!-- Docs populated via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle Column: Chart & Chat -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Trends Chart -->
+                <div class="bg-white rounded-xl shadow p-6 border border-slate-100">
+                    <h3 class="text-lg font-bold text-clinical mb-4"><i class="fas fa-chart-line mr-2"></i>Tren Kesehatan</h3>
+                    <div class="h-64 relative">
+                        <canvas id="healthChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chatbot -->
+                <div class="bg-white rounded-xl shadow overflow-hidden flex flex-col h-[420px] border border-slate-200">
+                    <div class="bg-clinical p-4 text-white flex items-center">
+                        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center mr-3 shadow-sm">
+                            <i class="fas fa-robot text-clinical text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-sm">Asisten Kesehatan AI</h3>
+                            <p class="text-[10px] text-teal">Online | Didukung oleh Hugging Face Qwen</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 p-4 bg-slate-50 overflow-y-auto flex flex-col space-y-4" id="chatWindow">
+                        <div class="flex justify-start">
+                            <div class="bg-white p-3 rounded-lg rounded-tl-none shadow border border-slate-100 max-w-[80%]">
+                                <p class="text-sm text-slate-700">Halo! Saya Asisten Kesehatan AI Anda. Ada yang bisa saya bantu hari ini?</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-white border-t flex items-center">
+                        <input type="text" id="chatInput" class="flex-1 bg-slate-100 border-none rounded-full px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-teal" placeholder="Ketik gejala atau pertanyaan Anda...">
+                        <button onclick="sendChat()" class="ml-2 w-10 h-10 bg-clinical shadow-md text-white rounded-full flex items-center justify-center hover:opacity-90 transition">
+                            <i class="fas fa-paper-plane text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user'));
+        
+        if (!token || user.role !== 'patient') {
+            window.location.href = 'login.html';
+        }
+
+        document.getElementById('userNameDisplay').textContent = user.name;
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        const apiHeaders = { 'Authorization': `Bearer ${token}` };
+
+        // Fetch and render data
+        async function loadDashboard() {
+            try {
+                const [vitalsRes, docsRes, chatRes] = await Promise.all([
+                    fetch('http://localhost:5000/api/patient/vitals', { headers: apiHeaders }),
+                    fetch('http://localhost:5000/api/patient/documents', { headers: apiHeaders }),
+                    fetch('http://localhost:5000/api/chat', { headers: apiHeaders })
+                ]);
+                
+                const vitalsData = await vitalsRes.json();
+                const docsData = await docsRes.json();
+                const chatData = await chatRes.json();
+
+                if (vitalsData.success) renderVitals(vitalsData.records);
+                if (docsData.success) renderDocs(docsData.documents);
+                if (chatData.success) renderChatHistory(chatData.history);
+
+            } catch (error) {
+                console.error("Gagal memuat dashboard", error);
+            }
+        }
+
+        let chartInstance = null;
+
+        function renderVitals(records) {
+            if (records.length === 0) return;
+            
+            // Snapshot
+            const latest = records[0];
+            document.getElementById('latestHr').textContent = latest.heart_rate;
+            document.getElementById('latestBp').textContent = `${latest.blood_pressure_sys}/${latest.blood_pressure_dia}`;
+            document.getElementById('latestTemp').textContent = latest.temperature;
+            document.getElementById('lastUpdate').textContent = new Date(latest.recorded_at).toLocaleDateString();
+
+            // Color coding
+            const hrCard = document.getElementById('hrCard');
+            if (latest.heart_rate > 100 || latest.heart_rate < 60) hrCard.className = "bg-crimson/10 text-crimson rounded-xl shadow p-6 border-t-4 border-crimson";
+            else hrCard.className = "bg-white text-clinical rounded-xl shadow p-6 border-t-4 border-emerald";
+
+            const bpCard = document.getElementById('bpCard');
+            if (latest.blood_pressure_sys > 140 || latest.blood_pressure_dia > 90) bpCard.className = "bg-crimson/10 text-crimson rounded-xl shadow p-6 border-t-4 border-crimson";
+            else bpCard.className = "bg-white text-clinical rounded-xl shadow p-6 border-t-4 border-emerald";
+
+            // Chart
+            const dates = records.map(r => new Date(r.recorded_at).toLocaleDateString()).reverse();
+            const hrs = records.map(r => r.heart_rate).reverse();
+            const sys = records.map(r => r.blood_pressure_sys).reverse();
+            
+            const ctx = document.getElementById('healthChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+            
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        { label: 'Detak Jantung (bpm)', data: hrs, borderColor: '#008080', backgroundColor: '#00808022', fill: true, tension: 0.4 },
+                        { label: 'Sistolik (mmHg)', data: sys, borderColor: '#dc143c', backgroundColor: 'transparent', borderDash: [5, 5], tension: 0.4 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+            });
+        }
+
+        // Vitals Submit
+        document.getElementById('vitalsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                heart_rate: document.getElementById('vrHr').value,
+                blood_pressure_sys: document.getElementById('vrSys').value,
+                blood_pressure_dia: document.getElementById('vrDia').value,
+                temperature: document.getElementById('vrTemp').value,
+                symptoms: document.getElementById('vrSymp').value
+            };
+            try {
+                await fetch('http://localhost:5000/api/patient/vitals', {
+                    method: 'POST',
+                    headers: { ...apiHeaders, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                document.getElementById('vitalsForm').reset();
+                loadDashboard();
+            } catch (err) { alert('Gagal menyimpan tanda vital'); }
+        });
+
+        // Docs Upload
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', uploadFile);
+
+        async function uploadFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('health_file', file);
+            
+            try {
+                await fetch('http://localhost:5000/api/patient/documents', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                loadDashboard();
+            } catch (err) { alert('Unggah dokumen gagal'); }
+        }
+
+        function renderDocs(docs) {
+            const list = document.getElementById('docList');
+            list.innerHTML = docs.map(d => `
+                <div class="flex items-center justify-between p-3 bg-white border border-slate-100 shadow-sm rounded-lg text-sm mb-2 hover:border-teal transition">
+                    <div class="flex items-center overflow-hidden">
+                        <i class="fas fa-file-pdf text-teal text-lg mr-3"></i>
+                        <span class="truncate text-clinical font-semibold w-32" title="${d.document_name}">${d.document_name}</span>
+                    </div>
+                    <a href="http://localhost:5000${d.storage_url}" target="_blank" class="text-xs bg-slate-100 text-clinical px-3 py-1 rounded hover:bg-clinical hover:text-white transition font-semibold">Buka</a>
+                </div>
+            `).join('');
+        }
+
+        // Chatbot
+        const chatWindow = document.getElementById('chatWindow');
+        
+        function appendMsg(sender, text) {
+            const isUser = sender === 'patient';
+            const html = `
+                <div class="flex ${isUser ? 'justify-end' : 'justify-start'}">
+                    <div class="p-3 text-sm rounded-xl shadow-sm max-w-[80%] ${isUser ? 'bg-clinical text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-none'}">
+                        <p>${text}</p>
+                    </div>
+                </div>
+            `;
+            chatWindow.insertAdjacentHTML('beforeend', html);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function renderChatHistory(history) {
+            chatWindow.innerHTML = '';
+            appendMsg('ai', "Halo! Saya Asisten Kesehatan AI Anda. Ada yang bisa saya bantu hari ini?");
+            history.forEach(h => appendMsg(h.sender, h.message));
+        }
+
+        async function sendChat() {
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            
+            input.value = '';
+            appendMsg('patient', msg);
+
+            // Add loading
+            const loadId = 'loading-' + Date.now();
+            chatWindow.insertAdjacentHTML('beforeend', `<div id="${loadId}" class="flex justify-start"><div class="p-3 text-sm rounded-xl bg-white border border-slate-200 rounded-tl-none"><i class="fas fa-ellipsis-h animate-pulse text-teal"></i></div></div>`);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            try {
+                const res = await fetch('http://localhost:5000/api/chat', {
+                    method: 'POST',
+                    headers: { ...apiHeaders, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                const data = await res.json();
+                document.getElementById(loadId).remove();
+                if(data.success) {
+                    appendMsg('ai', data.ai_response);
+                } else {
+                    appendMsg('ai', 'Gagal terhubung ke layanan AI.');
+                }
+            } catch (err) {
+                document.getElementById(loadId).remove();
+                appendMsg('ai', 'Kesalahan jaringan.');
+            }
+        }
+
+        document.getElementById('chatInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') sendChat();
+        });
+
+        loadDashboard();
+    </script>
+</body>
+</html>
