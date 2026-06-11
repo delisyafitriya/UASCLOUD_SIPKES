@@ -97,12 +97,19 @@ jobs:
 
       - name: 🔐 Deploy Backend & Database ke EC2 Private
         run: |
-          # METODE BARU: Kirim folder kodingan dari GitHub langsung ke Backend privat lewat jembatan otomatis
+          # 1. Kirim folder kodingan dari GitHub langsung ke Backend privat lewat jembatan otomatis
           tar -czf - . | ssh backend "mkdir -p ~/sipkes-app && cd ~/sipkes-app && tar -xzf -"
           
-          # Nyalakan Docker di Backend privat
+          # 2. TRIK OFFLINE: Frontend download Image MySQL, lalu oper secara lokal ke Backend privat lewat jalur internal
+          ssh frontend "
+            docker pull mysql:8.0.33
+            docker save mysql:8.0.33 | ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.BACKEND_PRIVATE_IP }} 'docker load'
+          "
+          
+          # 3. Nyalakan Docker di Backend privat menggunakan image yang sudah dioper
           ssh backend "
             cd ~/sipkes-app
+            
             echo 'DB_HOST=database-mysql' > .env
             echo 'DB_USER=root' >> .env
             echo 'DB_PASSWORD=oop' >> .env
@@ -114,5 +121,5 @@ jobs:
             echo 'GCS_KEYFILE=./gcp-service-account.json' >> .env
             
             cd backend
-            docker compose up -d --build
+            docker compose up -d
           "
