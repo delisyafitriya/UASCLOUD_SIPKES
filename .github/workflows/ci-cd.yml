@@ -104,31 +104,30 @@ jobs:
             docker stop sipkes-frontend-container || true
             docker rm sipkes-frontend-container || true
             
+            # AMAN JAYA: Kita buka port 3000 DAN port 80 sekaligus. 
+            # Apapun jeroan Dockerfile kalian (Nginx atau Node), pasti ketangkap!
             docker run -d \
               --name sipkes-frontend-container \
               -p 3000:3000 \
+              -p 80:80 \
+              -p 80:3000 \
               -e PORT=3000 \
               uascloud_sipkes-frontend:latest
           "
 
       - name: 🔐 Deploy Backend & Database ke EC2 Private (Full Offline - Run Bypass)
         run: |
-          # 1. Oper Image MySQL resmi via Frontend ke Backend
           ssh frontend "docker pull mysql:8.0.33"
           ssh frontend "docker save mysql:8.0.33" | ssh backend "docker load"
           
-          # 2. Oper Image Backend buatan GitHub ke Backend Privat
           cat backend-image.tar | ssh backend "docker load"
           
           ssh backend "
-            # 3. Bersihkan kontainer lama jika ada biar gak bentrok port/nama
             docker stop sipkes-db-container sipkes-backend-container || true
             docker rm sipkes-db-container sipkes-backend-container || true
             
-            # 4. Buat network internal baru (jika belum ada) supaya Backend bisa ngobrol sama DB
             docker network create sipkes-net || true
             
-            # 5. NYALAKAN DATABASE NYA LANGSUNG
             docker run -d \
               --name sipkes-db-container \
               --network sipkes-net \
@@ -137,7 +136,6 @@ jobs:
               -e MYSQL_DATABASE=health_db \
               mysql:8.0.33
               
-            # 6. NYALAKAN BACKEND NYA LANGSUNG (Arahkan DB_HOST ke nama kontainer DB di atas)
             docker run -d \
               --name sipkes-backend-container \
               --network sipkes-net \
