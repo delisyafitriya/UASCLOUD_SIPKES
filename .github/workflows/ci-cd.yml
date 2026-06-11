@@ -36,19 +36,17 @@ jobs:
       - name: Build Frontend Docker Image
         run: docker build -t sipkes-frontend:latest ./frontend
 
-              - name: Create temporary env file for Docker Compose
+      - name: Create temporary env file for Docker Compose
         run: |
-          cat > .env <<EOF
-          DB_HOST=database
-          DB_USER=root
-          DB_PASSWORD=oop
-          DB_NAME=health_db
-          JWT_SECRET=dummy_secret_for_ci
-          HF_TOKEN=dummy_hf_token_for_ci
-          PORT=5000
-          GCS_BUCKET_NAME=sipkes-medical-documents
-          GCS_KEYFILE=./gcp-service-account.json
-          EOF
+          echo "DB_HOST=database" >> .env
+          echo "DB_USER=root" >> .env
+          echo "DB_PASSWORD=oop" >> .env
+          echo "DB_NAME=health_db" >> .env
+          echo "JWT_SECRET=dummy_secret_for_ci" >> .env
+          echo "HF_TOKEN=dummy_hf_token_for_ci" >> .env
+          echo "PORT=5000" >> .env
+          echo "GCS_BUCKET_NAME=sipkes-medical-documents" >> .env
+          echo "GCS_KEYFILE=./gcp-service-account.json" >> .env
 
       - name: Validate Docker Compose File
         run: docker compose -f docker-compose.yaml config
