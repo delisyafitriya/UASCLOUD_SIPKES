@@ -53,3 +53,39 @@ jobs:
 
       - name: CI/CD Status
         run: echo "Build, test, dockerize, and docker-compose validation completed successfully."
+
+  deploy-to-aws:
+    needs: build-test-dockerize # Job ini hanya jalan kalau build & test di atas sukses/hijau
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Kunci SSH & Jembatan Jaringan
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          # Mendaftarkan sidik jari agar tidak terhadang prompt yes/no saat melakukan deploy
+          ssh-keyscan -H ${{ secrets.FRONTEND_PUBLIC_IP }} >> ~/.ssh/known_hosts
+
+      - name: 🚀 Deploy Frontend ke EC2 Public
+        run: |
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }} "
+            mkdir -p ~/sipkes-app && cd ~/sipkes-app
+            if [ -d ".git" ]; then git pull origin main; else git clone https://github.com/${{ github.repository }}.git .; fi
+            cd frontend
+            docker compose up -d --build
+          "
+
+      - name: 🔐 Deploy Backend & Database ke EC2 Private (Proxy Jump)
+        run: |
+          # Perintah melompat lewat Frontend untuk masuk ke Backend yang terisolasi dari internet
+          ssh -i ~/.ssh/id_rsa \
+          -o ProxyCommand="ssh -i ~/.ssh/id_rsa -W %h:%p ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }}" \
+          ubuntu@${{ secrets.BACKEND_PRIVATE_IP }} "
+            mkdir -p ~/sipkes-app && cd ~/sipkes-app
+            if [ -d ".git" ]; then git pull origin main; else git clone https://github.com/${{ github.repository }}.git .; fi
+            cd backend
+            docker compose up -d --build
+          "
