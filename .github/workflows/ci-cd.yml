@@ -30,23 +30,14 @@ jobs:
         working-directory: ./backend
         run: npm test --if-present
 
-      - name: Detect Dockerfile
-        id: detect
-        run: |
-          if [ -f Dockerfile ]; then
-            echo "path=Dockerfile" >> "$GITHUB_OUTPUT"
-            echo "context=." >> "$GITHUB_OUTPUT"
-          elif [ -f backend/Dockerfile ]; then
-            echo "path=backend/Dockerfile" >> "$GITHUB_OUTPUT"
-            echo "context=./backend" >> "$GITHUB_OUTPUT"
-          else
-            echo "path=" >> "$GITHUB_OUTPUT"
-            echo "Dockerfile belum tersedia. Tahap dockerize akan dijalankan setelah Dockerfile selesai."
-          fi
+      - name: Build Backend Docker Image
+        run: docker build -t sipkes-backend:latest ./backend
 
-      - name: Build Docker Image
-        if: steps.detect.outputs.path != ''
-        run: docker build -f ${{ steps.detect.outputs.path }} -t sipkes-app:latest ${{ steps.detect.outputs.context }}
+      - name: Build Frontend Docker Image
+        run: docker build -t sipkes-frontend:latest ./frontend
 
-      - name: Pipeline Status
-        run: echo "CI pipeline selesai. Deploy ke EC2 akan disambungkan setelah konfigurasi AWS selesai."
+      - name: Validate Docker Compose File
+        run: docker compose -f docker-compose.yaml config
+
+      - name: CI/CD Status
+        run: echo "Build, test, dockerize, and docker-compose validation completed successfully."
