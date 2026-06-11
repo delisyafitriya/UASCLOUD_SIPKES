@@ -32,13 +32,11 @@ jobs:
 
       - name: Build & Save Docker Images (Anti-Offline)
         run: |
-          # Rakit image di GitHub yang internetnya kencang
-          docker build -t sipkes-backend:latest ./backend
-          docker build -t sipkes-frontend:latest ./frontend
+          docker build -t uascloud_sipkes-backend:latest ./backend
+          docker build -t uascloud_sipkes-frontend:latest ./frontend
           
-          # Bungkus jadi file arsip mentah (.tar)
-          docker save sipkes-backend:latest -o backend-image.tar
-          docker save sipkes-frontend:latest -o frontend-image.tar
+          docker save uascloud_sipkes-backend:latest -o backend-image.tar
+          docker save uascloud_sipkes-frontend:latest -o frontend-image.tar
 
       - name: Upload Images as Artifacts
         uses: actions/upload-artifact@v4
@@ -103,15 +101,15 @@ jobs:
           ssh frontend "mkdir -p ~/sipkes-app"
           tar -czf - . | ssh frontend "cd ~/sipkes-app && tar -xzf -"
           
-          # Load image matang ke Frontend
           cat frontend-image.tar | ssh frontend "docker load"
           
           ssh frontend "
             cd ~/sipkes-app
             echo 'PORT=3000' > .env
             
-            # TRIK PEMBERSIH: Hapus perintah 'build:' dari docker-compose agar tidak download internet
-            sed -i '/build:/d' docker-compose.yaml
+            # TRIK BARU: Ubah build menjadi image secara otomatis agar compose valid
+            sed -i 's|build: ./frontend|image: uascloud_sipkes-frontend:latest|g' docker-compose.yaml
+            sed -i 's|build: ./backend|image: uascloud_sipkes-backend:latest|g' docker-compose.yaml
             
             cd frontend
             docker compose up -d
@@ -122,18 +120,17 @@ jobs:
           ssh backend "mkdir -p ~/sipkes-app"
           tar -czf - . | ssh backend "cd ~/sipkes-app && tar -xzf -"
           
-          # Oper Image MySQL resmi ke Backend
           ssh frontend "docker pull mysql:8.0.33"
           ssh frontend "docker save mysql:8.0.33" | ssh backend "docker load"
           
-          # Oper Image Backend buatan GitHub ke Backend Privat
           cat backend-image.tar | ssh backend "docker load"
           
           ssh backend "
             cd ~/sipkes-app
             
-            # TRIK PEMBERSIH: Paksa hapus perintah 'build:' agar Docker menggunakan image matang secara offline
-            sed -i '/build:/d' docker-compose.yaml
+            # TRIK BARU: Ubah build menjadi image secara otomatis agar compose valid
+            sed -i 's|build: ./frontend|image: uascloud_sipkes-frontend:latest|g' docker-compose.yaml
+            sed -i 's|build: ./backend|image: uascloud_sipkes-backend:latest|g' docker-compose.yaml
             
             echo 'DB_HOST=database-mysql' > .env
             echo 'DB_USER=root' >> .env
