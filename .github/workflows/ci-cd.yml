@@ -32,11 +32,11 @@ jobs:
 
       - name: Build & Save Docker Images (Anti-Offline)
         run: |
-          # Rakit image di GitHub Actions (yang punya internet kencang)
+          # Rakit image di GitHub yang internetnya kencang
           docker build -t sipkes-backend:latest ./backend
           docker build -t sipkes-frontend:latest ./frontend
           
-          # Bungkus image hasil rakitan menjadi file arsip mentah (.tar)
+          # Bungkus jadi file arsip mentah (.tar)
           docker save sipkes-backend:latest -o backend-image.tar
           docker save sipkes-frontend:latest -o frontend-image.tar
 
@@ -100,38 +100,40 @@ jobs:
 
       - name: 🚀 Deploy Frontend ke EC2 Public
         run: |
-          # 1. Kirim file kodingan utama
           ssh frontend "mkdir -p ~/sipkes-app"
           tar -czf - . | ssh frontend "cd ~/sipkes-app && tar -xzf -"
           
-          # 2. Oper image frontend hasil build GitHub langsung ke server Frontend
+          # Load image matang ke Frontend
           cat frontend-image.tar | ssh frontend "docker load"
           
-          # 3. Jalankan container secara offline tanpa build ulang
           ssh frontend "
             cd ~/sipkes-app
             echo 'PORT=3000' > .env
+            
+            # TRIK PEMBERSIH: Hapus perintah 'build:' dari docker-compose agar tidak download internet
+            sed -i '/build:/d' docker-compose.yaml
+            
             cd frontend
-            # Menggunakan perintah run/up tanpa flag --build agar menggunakan image jadi
             docker compose up -d
           "
 
       - name: 🔐 Deploy Backend & Database ke EC2 Private (Full Offline)
         run: |
-          # 1. Kirim file kodingan utama ke Backend Privat via Proxy Jump
           ssh backend "mkdir -p ~/sipkes-app"
           tar -czf - . | ssh backend "cd ~/sipkes-app && tar -xzf -"
           
-          # 2. Ambil Image MySQL resmi dari internet via Frontend, lalu oper ke Backend
+          # Oper Image MySQL resmi ke Backend
           ssh frontend "docker pull mysql:8.0.33"
           ssh frontend "docker save mysql:8.0.33" | ssh backend "docker load"
           
-          # 3. Oper Image Backend hasil build GitHub langsung ke server Backend Privat
+          # Oper Image Backend buatan GitHub ke Backend Privat
           cat backend-image.tar | ssh backend "docker load"
           
-          # 4. Nyalakan sistem di Backend privat secara total offline
           ssh backend "
             cd ~/sipkes-app
+            
+            # TRIK PEMBERSIH: Paksa hapus perintah 'build:' agar Docker menggunakan image matang secara offline
+            sed -i '/build:/d' docker-compose.yaml
             
             echo 'DB_HOST=database-mysql' > .env
             echo 'DB_USER=root' >> .env
@@ -144,7 +146,5 @@ jobs:
             echo 'GCS_KEYFILE=./gcp-service-account.json' >> .env
             
             cd backend
-            # Jalankan secara langsung tanpa build ulang karena image mentah sudah di-load
             docker compose up -d
           "
-          
