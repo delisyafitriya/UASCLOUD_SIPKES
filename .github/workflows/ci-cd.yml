@@ -66,16 +66,19 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          # Daftarkan sidik jari server utama agar tidak terhadang prompt SSH
+          
+          # JALAN PINTAS: Daftarkan sidik jari semua IP AWS kamu ke known_hosts otomatis
           ssh-keyscan -H ${{ secrets.FRONTEND_PUBLIC_IP }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H 10.1.1.28 >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.BACKEND_PRIVATE_IP }} >> ~/.ssh/known_hosts
 
       - name: 🚀 Deploy Frontend ke EC2 Public
         run: |
-          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }} "
+          # Ditambahkan flag pencegah verifikasi host key agar bypass total
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }} "
             mkdir -p ~/sipkes-app && cd ~/sipkes-app
             if [ -d ".git" ]; then git pull origin main; else git clone https://github.com/${{ github.repository }}.git .; fi
             
-            # Membuat file .env otomatis di Frontend
             echo 'PORT=3000' > .env
             
             cd frontend
@@ -84,16 +87,17 @@ jobs:
 
       - name: 🔐 Deploy Backend & Database ke EC2 Private (Proxy Jump)
         run: |
-          # Perintah melompat lewat Frontend untuk masuk ke Backend yang tidak punya internet
+          # SOLUSI TOTAL: Flag pengaman dipasang di kedua tingkat SSH (Lompatan Proxy dan Koneksi Target)
           ssh -i ~/.ssh/id_rsa \
-          -o ProxyCommand="ssh -i ~/.ssh/id_rsa -W %h:%p ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }}" \
+          -o StrictHostKeyChecking=no \
+          -o UserKnownHostsFile=/dev/null \
+          -o ProxyCommand="ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }}" \
           ubuntu@${{ secrets.BACKEND_PRIVATE_IP }} "
             mkdir -p ~/sipkes-app && cd ~/sipkes-app
             
-            # PERBAIKAN DI SINI: Ditambahkan flag -o StrictHostKeyChecking=no dan -o UserKnownHostsFile=/dev/null agar bypass verifikasi host key
+            # Tarik data lokal dari Frontend ke Backend secara aman tanpa cek host key
             ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@10.1.1.28 'cd ~/sipkes-app && tar -czf - .' | tar -xzf -
             
-            # Otomatis buat file .env langsung di dalam server Backend sebelum Docker menyala
             echo 'DB_HOST=database-mysql' > .env
             echo 'DB_USER=root' >> .env
             echo 'DB_PASSWORD=oop' >> .env
