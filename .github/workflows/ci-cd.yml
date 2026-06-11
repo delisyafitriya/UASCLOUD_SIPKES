@@ -1,0 +1,52 @@
+name: SIPKES CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - rahma-cloud-docs
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-test-dockerize:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Backend Dependencies
+        working-directory: ./backend
+        run: npm install
+
+      - name: Run Backend Test
+        working-directory: ./backend
+        run: npm test --if-present
+
+      - name: Detect Dockerfile
+        id: detect
+        run: |
+          if [ -f Dockerfile ]; then
+            echo "path=Dockerfile" >> "$GITHUB_OUTPUT"
+            echo "context=." >> "$GITHUB_OUTPUT"
+          elif [ -f backend/Dockerfile ]; then
+            echo "path=backend/Dockerfile" >> "$GITHUB_OUTPUT"
+            echo "context=./backend" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=" >> "$GITHUB_OUTPUT"
+            echo "Dockerfile belum tersedia. Tahap dockerize akan dijalankan setelah Dockerfile selesai."
+          fi
+
+      - name: Build Docker Image
+        if: steps.detect.outputs.path != ''
+        run: docker build -f ${{ steps.detect.outputs.path }} -t sipkes-app:latest ${{ steps.detect.outputs.context }}
+
+      - name: Pipeline Status
+        run: echo "CI pipeline selesai. Deploy ke EC2 akan disambungkan setelah konfigurasi AWS selesai."
