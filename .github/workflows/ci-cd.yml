@@ -55,7 +55,7 @@ jobs:
         run: echo "Build, test, dockerize, and docker-compose validation completed successfully."
 
   deploy-to-aws:
-    needs: build-test-dockerize # Langkah ini hanya jalan jika proses build & test di atas sukses
+    needs: build-test-dockerize
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -66,7 +66,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          # Daftarkan sidik jari server agar tidak terhadang prompt SSH yes/no
+          # Daftarkan sidik jari server utama agar tidak terhadang prompt SSH
           ssh-keyscan -H ${{ secrets.FRONTEND_PUBLIC_IP }} >> ~/.ssh/known_hosts
 
       - name: 🚀 Deploy Frontend ke EC2 Public
@@ -90,8 +90,8 @@ jobs:
           ubuntu@${{ secrets.BACKEND_PRIVATE_IP }} "
             mkdir -p ~/sipkes-app && cd ~/sipkes-app
             
-            # Trik Cerdas: Salin source code secara lokal dari folder Frontend karena Backend tidak bisa internetan
-            ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@10.1.1.28 'cd ~/sipkes-app && tar -czf - .' | tar -xzf -
+            # PERBAIKAN DI SINI: Ditambahkan flag -o StrictHostKeyChecking=no dan -o UserKnownHostsFile=/dev/null agar bypass verifikasi host key
+            ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@10.1.1.28 'cd ~/sipkes-app && tar -czf - .' | tar -xzf -
             
             # Otomatis buat file .env langsung di dalam server Backend sebelum Docker menyala
             echo 'DB_HOST=database-mysql' > .env
