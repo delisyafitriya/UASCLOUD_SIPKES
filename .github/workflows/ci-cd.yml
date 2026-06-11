@@ -111,34 +111,44 @@ jobs:
               uascloud_sipkes-frontend:latest
           "
 
-      - name: 🔐 Deploy Backend & Database ke EC2 Private (Full Offline)
+      - name: 🔐 Deploy Backend & Database ke EC2 Private (Full Offline - Run Bypass)
         run: |
-          ssh backend "mkdir -p ~/sipkes-app"
-          tar -czf - . | ssh backend "cd ~/sipkes-app && tar -xzf -"
-          
+          # 1. Oper Image MySQL resmi via Frontend ke Backend
           ssh frontend "docker pull mysql:8.0.33"
           ssh frontend "docker save mysql:8.0.33" | ssh backend "docker load"
           
+          # 2. Oper Image Backend buatan GitHub ke Backend Privat
           cat backend-image.tar | ssh backend "docker load"
           
           ssh backend "
-            # PENTING: Eksekusi semua perintah langsung dari folder utama app
-            cd ~/sipkes-app
+            # 3. Bersihkan kontainer lama jika ada biar gak bentrok port/nama
+            docker stop sipkes-db-container sipkes-backend-container || true
+            docker rm sipkes-db-container sipkes-backend-container || true
             
-            # Mengubah aturan build menjadi image langsung di file utama
-            sed -i 's|build: ./frontend|image: uascloud_sipkes-frontend:latest|g' docker-compose.yaml
-            sed -i 's|build: ./backend|image: uascloud_sipkes-backend:latest|g' docker-compose.yaml
+            # 4. Buat network internal baru (jika belum ada) supaya Backend bisa ngobrol sama DB
+            docker network create sipkes-net || true
             
-            echo 'DB_HOST=database' > .env
-            echo 'DB_USER=root' >> .env
-            echo 'DB_PASSWORD=oop' >> .env
-            echo 'DB_NAME=health_db' >> .env
-            echo 'JWT_SECRET=dummy_secret_for_ci' >> .env
-            echo 'HF_TOKEN=dummy_hf_token_for_ci' >> .env
-            echo 'PORT=5000' >> .env
-            echo 'GCS_BUCKET_NAME=sipkes-medical-documents' >> .env
-            echo 'GCS_KEYFILE=./gcp-service-account.json' >> .env
-            
-            # Jalankan semua service yang tersedia secara offline dari folder root aplikasi
-            docker compose up -d
+            # 5. NYALAKAN DATABASE NYA LANGSUNG
+            docker run -d \
+              --name sipkes-db-container \
+              --network sipkes-net \
+              -p 3306:3306 \
+              -e MYSQL_ROOT_PASSWORD=oop \
+              -e MYSQL_DATABASE=health_db \
+              mysql:8.0.33
+              
+            # 6. NYALAKAN BACKEND NYA LANGSUNG (Arahkan DB_HOST ke nama kontainer DB di atas)
+            docker run -d \
+              --name sipkes-backend-container \
+              --network sipkes-net \
+              -p 5000:5000 \
+              -e PORT=5000 \
+              -e DB_HOST=sipkes-db-container \
+              -e DB_USER=root \
+              -e DB_PASSWORD=oop \
+              -e DB_NAME=health_db \
+              -e JWT_SECRET=dummy_secret_for_ci \
+              -e HF_TOKEN=dummy_hf_token_for_ci \
+              -e GCS_BUCKET_NAME=sipkes-medical-documents \
+              uascloud_sipkes-backend:latest
           "
