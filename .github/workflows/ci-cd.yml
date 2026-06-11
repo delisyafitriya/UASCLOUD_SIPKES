@@ -61,43 +61,48 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Kunci SSH & Jembatan Jaringan
+      - name: Setup Kunci SSH & Konfigurasi Proxy Jump Otomatis
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           
-          # JALAN PINTAS: Daftarkan sidik jari semua IP AWS kamu ke known_hosts otomatis
-          ssh-keyscan -H ${{ secrets.FRONTEND_PUBLIC_IP }} >> ~/.ssh/known_hosts
-          ssh-keyscan -H 10.1.1.28 >> ~/.ssh/known_hosts
-          ssh-keyscan -H ${{ secrets.BACKEND_PRIVATE_IP }} >> ~/.ssh/known_hosts
+          # Membuat file konfigurasi SSH agar GitHub otomatis tahu cara melompat ke Backend privat
+          cat <<EOF > ~/.ssh/config
+          Host frontend
+            HostName ${{ secrets.FRONTEND_PUBLIC_IP }}
+            User ubuntu
+            IdentityFile ~/.ssh/id_rsa
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+
+          Host backend
+            HostName ${{ secrets.BACKEND_PRIVATE_IP }}
+            User ubuntu
+            IdentityFile ~/.ssh/id_rsa
+            ProxyCommand ssh frontend -W %h:%p
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+          EOF
 
       - name: 🚀 Deploy Frontend ke EC2 Public
         run: |
-          # Ditambahkan flag pencegah verifikasi host key agar bypass total
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }} "
+          ssh frontend "
             mkdir -p ~/sipkes-app && cd ~/sipkes-app
             if [ -d ".git" ]; then git pull origin main; else git clone https://github.com/${{ github.repository }}.git .; fi
-            
             echo 'PORT=3000' > .env
-            
             cd frontend
             docker compose up -d --build
           "
 
-      - name: 🔐 Deploy Backend & Database ke EC2 Private (Proxy Jump)
+      - name: 🔐 Deploy Backend & Database ke EC2 Private
         run: |
-          # SOLUSI TOTAL: Flag pengaman dipasang di kedua tingkat SSH (Lompatan Proxy dan Koneksi Target)
-          ssh -i ~/.ssh/id_rsa \
-          -o StrictHostKeyChecking=no \
-          -o UserKnownHostsFile=/dev/null \
-          -o ProxyCommand="ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }}" \
-          ubuntu@${{ secrets.BACKEND_PRIVATE_IP }} "
-            mkdir -p ~/sipkes-app && cd ~/sipkes-app
-            
-            # Tarik data lokal dari Frontend ke Backend secara aman tanpa cek host key
-            ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@10.1.1.28 'cd ~/sipkes-app && tar -czf - .' | tar -xzf -
-            
+          # METODE BARU: Kirim folder kodingan dari GitHub langsung ke Backend privat lewat jembatan otomatis
+          tar -czf - . | ssh backend "mkdir -p ~/sipkes-app && cd ~/sipkes-app && tar -xzf -"
+          
+          # Nyalakan Docker di Backend privat
+          ssh backend "
+            cd ~/sipkes-app
             echo 'DB_HOST=database-mysql' > .env
             echo 'DB_USER=root' >> .env
             echo 'DB_PASSWORD=oop' >> .env
