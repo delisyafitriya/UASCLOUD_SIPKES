@@ -124,10 +124,12 @@ jobs:
           cat backend-image.tar | ssh backend "docker load"
           
           ssh backend "
-            docker stop sipkes-db-container sipkes-backend-container || true
-            docker rm sipkes-db-container sipkes-backend-container || true
+            docker ps -q --filter publish=3306 | xargs -r docker stop
+            docker ps -q --filter publish=5000 | xargs -r docker stop
+            docker ps -aq | xargs -r docker rm -f
             
-            docker network create sipkes-net || true
+            docker network rm sipkes-net || true
+            docker network create sipkes-net
             
             docker run -d \
               --name sipkes-db-container \
@@ -137,6 +139,8 @@ jobs:
               -e MYSQL_DATABASE=health_db \
               mysql:8.0.33
               
+            sleep 10
+            
             docker run -d \
               --name sipkes-backend-container \
               --network sipkes-net \
