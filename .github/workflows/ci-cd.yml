@@ -101,15 +101,13 @@ jobs:
           cat frontend-image.tar | ssh frontend "docker load"
           
           ssh frontend "
-            # Matikan kontainer lama yang namanya sama
             docker stop sipkes-frontend-container || true
             docker rm sipkes-frontend-container || true
             
-            # PERBAIKAN: Hanya pakai port 3000 saja agar tidak bentrok dengan aplikasi port 80 di servermu
+            # SOLUSI FINAL: Port 3000 luar diteruskan ke port 80 jeroan container (Nginx)
             docker run -d \
               --name sipkes-frontend-container \
-              -p 3000:3000 \
-              -e PORT=3000 \
+              -p 3000:80 \
               uascloud_sipkes-frontend:latest
           "
 
