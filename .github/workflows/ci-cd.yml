@@ -122,12 +122,13 @@ jobs:
           cat backend-image.tar | ssh backend "docker load"
           
           ssh backend "
+            # PENTING: Eksekusi semua perintah langsung dari folder utama app
             cd ~/sipkes-app
             
+            # Mengubah aturan build menjadi image langsung di file utama
             sed -i 's|build: ./frontend|image: uascloud_sipkes-frontend:latest|g' docker-compose.yaml
             sed -i 's|build: ./backend|image: uascloud_sipkes-backend:latest|g' docker-compose.yaml
             
-            # Memastikan DB_HOST mengarah ke container 'database' lokal
             echo 'DB_HOST=database' > .env
             echo 'DB_USER=root' >> .env
             echo 'DB_PASSWORD=oop' >> .env
@@ -138,7 +139,6 @@ jobs:
             echo 'GCS_BUCKET_NAME=sipkes-medical-documents' >> .env
             echo 'GCS_KEYFILE=./gcp-service-account.json' >> .env
             
-            cd backend
-            # PERBAIKAN FIXED: Mengubah 'database-mysql' menjadi 'database' sesuai struktur kalian
-            docker compose up -d backend database
+            # Jalankan semua service yang tersedia secara offline dari folder root aplikasi
+            docker compose up -d
           "
