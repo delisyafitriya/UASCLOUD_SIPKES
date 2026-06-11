@@ -101,14 +101,21 @@ jobs:
           cat frontend-image.tar | ssh frontend "docker load"
           
           ssh frontend "
-            docker stop sipkes-frontend-container || true
-            docker rm sipkes-frontend-container || true
+            docker stop sipkes-frontend-container sipkes-frontend-proxy || true
+            docker rm sipkes-frontend-container sipkes-frontend-proxy || true
             
-            # SOLUSI FINAL: Port 3000 luar diteruskan ke port 80 jeroan container (Nginx)
+            # 1. Jalankan Web Frontend (Port 3000)
             docker run -d \
               --name sipkes-frontend-container \
               -p 3000:80 \
               uascloud_sipkes-frontend:latest
+              
+            # 2. JEMBATAN DARURAT: Buka port 5000 di Frontend untuk dilempar ke IP Private Backend
+            # PENTING: Ganti 10.0.x.x di bawah ini dengan IP PRIVATE server backend kalian!
+            docker run -d \
+              --name sipkes-frontend-proxy \
+              -p 5000:5000 \
+              alpine/socat TCP-LISTEN:5000,fork TCP:${{ secrets.BACKEND_PRIVATE_IP }}:5000
           "
 
       - name: 🔐 Deploy Backend & Database ke EC2 Private (Full Offline - Run Bypass)

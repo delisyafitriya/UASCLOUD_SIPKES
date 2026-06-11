@@ -79,7 +79,8 @@
             const errorDiv = document.getElementById('errorMessage');
 
             try {
-                const response = await fetch('http://localhost:5000/api/auth/login', {
+                // GANTI BARIS 77 JADI SEPERTI INI:
+                const response = await fetch('http://44.214.105.143:5000/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })

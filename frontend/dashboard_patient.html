@@ -23,7 +23,6 @@
     </script>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 antialiased">
-    <!-- Navbar -->
     <nav class="bg-clinical text-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
@@ -45,7 +44,6 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         
-        <!-- Snapshot Widget -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="bg-white rounded-xl shadow p-6 border-t-4" id="hrCard">
                 <p class="text-sm text-slate-500 font-semibold mb-1">Detak Jantung</p>
@@ -76,9 +74,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- Left Column: Vitals Form & Docs -->
             <div class="space-y-6">
-                <!-- Vitals Form -->
                 <div class="bg-white rounded-xl shadow p-6 border border-slate-100">
                     <h3 class="text-lg font-bold text-clinical mb-4"><i class="fas fa-plus-circle mr-2"></i>Catat Tanda Vital</h3>
                     <form id="vitalsForm" class="space-y-4">
@@ -110,7 +106,6 @@
                     </form>
                 </div>
 
-                <!-- Document Upload -->
                 <div class="bg-white rounded-xl shadow p-6 border border-slate-100">
                     <h3 class="text-lg font-bold text-clinical mb-4"><i class="fas fa-file-medical mr-2"></i>Dokumen Medis</h3>
                     
@@ -121,14 +116,11 @@
                     </div>
                     
                     <div class="max-h-40 overflow-y-auto space-y-2 pr-1" id="docList">
-                        <!-- Docs populated via JS -->
-                    </div>
+                        </div>
                 </div>
             </div>
 
-            <!-- Middle Column: Chart & Chat -->
             <div class="lg:col-span-2 space-y-6">
-                <!-- Trends Chart -->
                 <div class="bg-white rounded-xl shadow p-6 border border-slate-100">
                     <h3 class="text-lg font-bold text-clinical mb-4"><i class="fas fa-chart-line mr-2"></i>Tren Kesehatan</h3>
                     <div class="h-64 relative">
@@ -136,7 +128,6 @@
                     </div>
                 </div>
 
-                <!-- Chatbot -->
                 <div class="bg-white rounded-xl shadow overflow-hidden flex flex-col h-[420px] border border-slate-200">
                     <div class="bg-clinical p-4 text-white flex items-center">
                         <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center mr-3 shadow-sm">
@@ -187,10 +178,11 @@
         // Fetch and render data
         async function loadDashboard() {
             try {
+                // UPDATE: Mengubah endpoint localhost ke IP AWS EC2 Anda
                 const [vitalsRes, docsRes, chatRes] = await Promise.all([
-                    fetch('http://localhost:5000/api/patient/vitals', { headers: apiHeaders }),
-                    fetch('http://localhost:5000/api/patient/documents', { headers: apiHeaders }),
-                    fetch('http://localhost:5000/api/chat', { headers: apiHeaders })
+                    fetch('http://44.214.105.143:5000/api/patient/vitals', { headers: apiHeaders }),
+                    fetch('http://44.214.105.143:5000/api/patient/documents', { headers: apiHeaders }),
+                    fetch('http://44.214.105.143:5000/api/chat', { headers: apiHeaders })
                 ]);
                 
                 const vitalsData = await vitalsRes.json();
@@ -259,7 +251,8 @@
                 symptoms: document.getElementById('vrSymp').value
             };
             try {
-                await fetch('http://localhost:5000/api/patient/vitals', {
+                // UPDATE: Mengubah endpoint ke IP AWS EC2 Anda
+                await fetch('http://44.214.105.143:5000/api/patient/vitals', {
                     method: 'POST',
                     headers: { ...apiHeaders, 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -283,7 +276,8 @@
             formData.append('health_file', file);
             
             try {
-                await fetch('http://localhost:5000/api/patient/documents', {
+                // UPDATE: Mengubah endpoint ke IP AWS EC2 Anda
+                await fetch('http://44.214.105.143:5000/api/patient/documents', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
@@ -300,7 +294,7 @@
                         <i class="fas fa-file-pdf text-azure text-lg mr-3"></i>
                         <span class="truncate text-clinical font-semibold w-32" title="${d.document_name}">${d.document_name}</span>
                     </div>
-                    <a href="http://localhost:5000${d.storage_url}" target="_blank" class="text-xs bg-slate-100 text-clinical px-3 py-1 rounded hover:bg-clinical hover:text-white transition font-semibold">Buka</a>
+                    <a href="http://44.214.105.143:5000${d.storage_url}" target="_blank" class="text-xs bg-slate-100 text-clinical px-3 py-1 rounded hover:bg-clinical hover:text-white transition font-semibold">Buka</a>
                 </div>
             `).join('');
         }
@@ -341,7 +335,8 @@
             chatWindow.scrollTop = chatWindow.scrollHeight;
 
             try {
-                const res = await fetch('http://localhost:5000/api/chat', {
+                // UPDATE: Mengubah endpoint ke IP AWS EC2 Anda
+                const res = await fetch('http://44.214.105.143:5000/api/chat', {
                     method: 'POST',
                     headers: { ...apiHeaders, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: msg })

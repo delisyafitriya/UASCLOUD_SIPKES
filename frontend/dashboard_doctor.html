@@ -23,7 +23,6 @@
     </script>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 antialiased">
-    <!-- Navbar -->
     <nav class="bg-clinical text-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
@@ -62,13 +61,11 @@
                     </tr>
                 </thead>
                 <tbody id="patientTableBody" class="divide-y divide-slate-100">
-                    <!-- Populated via JS -->
-                </tbody>
+                    </tbody>
             </table>
         </div>
     </div>
 
-    <!-- Modal -->
     <div id="patientModal" class="fixed inset-0 bg-slate-900 bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
             <div class="bg-clinical px-6 py-4 flex justify-between items-center text-white border-b border-white/10">
@@ -78,7 +75,6 @@
             
             <div class="p-6 overflow-y-auto flex-1 bg-slate-50 grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                <!-- Left: Chart & Info -->
                 <div class="lg:col-span-2 space-y-6">
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 border-l-4 border-l-azure">
                         <h4 class="font-bold text-clinical mb-4"><i class="fas fa-chart-area mr-2 text-azure"></i>Riwayat Kesehatan</h4>
@@ -93,7 +89,6 @@
                     </div>
                 </div>
 
-                <!-- Right: Docs & Notes -->
                 <div class="space-y-6">
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 border-t-4 border-t-cerulean">
                         <h4 class="font-bold text-clinical mb-4"><i class="fas fa-folder-open mr-2 text-cerulean"></i>Dokumen Medis</h4>
@@ -131,7 +126,8 @@
         let chartInstance = null;
 
         async function loadPatients() {
-            const res = await fetch('http://localhost:5000/api/doctor/patients', { headers: apiHeaders });
+            // UPDATE: Mengarah ke IP AWS Port 5000 Proxy
+            const res = await fetch('http://44.214.105.143:5000/api/doctor/patients', { headers: apiHeaders });
             const data = await res.json();
             if (data.success) {
                 const tbody = document.getElementById('patientTableBody');
@@ -139,7 +135,8 @@
                 
                 let rowsHtml = '';
                 for (let p of data.patients) {
-                    const rRes = await fetch(`http://localhost:5000/api/doctor/patient/${p.id}`, { headers: apiHeaders });
+                    // UPDATE: Mengarah ke IP AWS Port 5000 Proxy
+                    const rRes = await fetch(`http://44.214.105.143:5000/api/doctor/patient/${p.id}`, { headers: apiHeaders });
                     const rData = await rRes.json();
                     let statusHtml = '<span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-semibold">Tidak Ada Data</span>';
                     
@@ -174,7 +171,8 @@
             document.getElementById('drNotes').value = '';
             document.getElementById('selectedRecordId').value = '';
 
-            const res = await fetch(`http://localhost:5000/api/doctor/patient/${id}`, { headers: apiHeaders });
+            // UPDATE: Mengarah ke IP AWS Port 5000 Proxy
+            const res = await fetch(`http://44.214.105.143:5000/api/doctor/patient/${id}`, { headers: apiHeaders });
             const data = await res.json();
             
             if (data.success) {
@@ -184,7 +182,7 @@
                 docsList.innerHTML = data.documents.map(d => `
                     <div class="flex items-center justify-between p-2 bg-slate-50 border border-slate-100 rounded text-xs hover:border-azure transition">
                         <span class="truncate w-32 font-medium text-clinical"><i class="fas fa-file-pdf text-azure mr-2"></i>${d.document_name}</span>
-                        <a href="http://localhost:5000${d.storage_url}" target="_blank" class="bg-slate-200 text-clinical px-2 py-1 rounded hover:bg-clinical hover:text-white transition font-semibold">Buka</a>
+                        <a href="http://44.214.105.143:5000${d.storage_url}" target="_blank" class="bg-slate-200 text-clinical px-2 py-1 rounded hover:bg-clinical hover:text-white transition font-semibold">Buka</a>
                     </div>
                 `).join('') || '<p class="text-xs text-slate-400">Tidak ada dokumen.</p>';
 
@@ -240,7 +238,8 @@
             if (!id) return alert('Pilih salah satu catatan dari Riwayat Kesehatan terlebih dahulu.');
 
             try {
-                const res = await fetch(`http://localhost:5000/api/doctor/record/${id}/notes`, {
+                // UPDATE: Mengarah ke IP AWS Port 5000 Proxy
+                const res = await fetch(`http://44.214.105.143:5000/api/doctor/record/${id}/notes`, {
                     method: 'POST',
                     headers: { ...apiHeaders, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ notes })
@@ -249,6 +248,7 @@
                 if(data.success) {
                     alert('Catatan berhasil disimpan.');
                     closeModal();
+                    loadPatients();
                 }
             } catch (err) {
                 alert('Gagal menyimpan catatan.');

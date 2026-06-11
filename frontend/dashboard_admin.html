@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin coba - Sistem Pemantauan Kesehatan</title>
+    <title>Dashboard Admin - Sistem Pemantauan Kesehatan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -23,7 +23,6 @@
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 antialiased flex h-screen overflow-hidden">
     
-    <!-- Sidebar -->
     <aside class="w-64 bg-clinical text-white flex flex-col h-full shadow-2xl z-10">
         <div class="h-16 flex items-center px-6 border-b border-white/10">
             <i class="fas fa-shield-alt text-2xl mr-2"></i>
@@ -52,10 +51,8 @@
         </div>
     </aside>
 
-    <!-- Main Content -->
     <main class="flex-1 overflow-y-auto bg-slate-50 p-8 relative">
         
-        <!-- Metrics -->
         <div class="mb-8">
             <h2 class="text-2xl font-bold text-clinical mb-6">Ringkasan Sistem</h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -91,41 +88,34 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <!-- Doctor Management -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[400px]">
                 <div class="p-5 border-b flex justify-between items-center bg-slate-50">
                     <h3 class="font-bold text-clinical"><i class="fas fa-user-md mr-2"></i>Manajemen Dokter</h3>
                     <button onclick="openDoctorModal()" class="bg-clinical hover:opacity-90 text-white text-xs px-3 py-1.5 rounded font-semibold transition shadow-sm"><i class="fas fa-plus mr-1"></i>Tambah Dokter</button>
                 </div>
                 <div class="flex-1 overflow-y-auto p-2 divide-y divide-slate-100" id="doctorList">
-                    <!-- Populated via JS -->
-                </div>
+                    </div>
             </div>
 
-            <!-- Patient Management -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[400px]">
                 <div class="p-5 border-b flex justify-between items-center bg-slate-50">
                     <h3 class="font-bold text-clinical"><i class="fas fa-users mr-2"></i>Manajemen Pasien</h3>
                     <button onclick="openPatientModal()" class="bg-clinical hover:opacity-90 text-white text-xs px-3 py-1.5 rounded font-semibold transition shadow-sm"><i class="fas fa-plus mr-1"></i>Tambah Pasien</button>
                 </div>
                 <div class="flex-1 overflow-y-auto p-2 divide-y divide-slate-100" id="patientList">
-                    <!-- Populated via JS -->
-                </div>
+                    </div>
             </div>
         </div>
 
-        <!-- Audit Logs -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[300px]">
             <div class="p-5 border-b flex justify-between items-center bg-slate-50">
                 <h3 class="font-bold text-clinical"><i class="fas fa-history mr-2"></i>Log Keamanan Sistem</h3>
                 <span class="text-[10px] bg-cerulean/20 text-cerulean px-2 py-1 rounded uppercase font-bold tracking-wider animate-pulse border border-cerulean">Langsung</span>
             </div>
             <div class="flex-1 overflow-y-auto bg-slate-900 p-4 font-mono text-xs text-cerulean space-y-1" id="auditList">
-                <!-- Populated via JS -->
-            </div>
+                </div>
         </div>
         
-        <!-- Add/Edit Doctor Modal -->
         <div id="doctorModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
                 <div class="bg-clinical text-white p-4 flex justify-between items-center">
@@ -157,7 +147,6 @@
             </div>
         </div>
 
-        <!-- Add/Edit Patient Modal -->
         <div id="patientModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
                 <div class="bg-clinical text-white p-4 flex justify-between items-center">
@@ -207,11 +196,12 @@
 
         async function loadAdminData() {
             try {
+                // UPDATE: Mengarah langsung ke IP Public Frontend AWS Port 5000 Proxy
                 const [metricsRes, doctorsRes, patientsRes, logsRes] = await Promise.all([
-                    fetch('http://localhost:5000/api/admin/metrics', { headers: apiHeaders }),
-                    fetch('http://localhost:5000/api/admin/doctors', { headers: apiHeaders }),
-                    fetch('http://localhost:5000/api/admin/patients', { headers: apiHeaders }),
-                    fetch('http://localhost:5000/api/admin/audit-logs', { headers: apiHeaders })
+                    fetch('http://44.214.105.143:5000/api/admin/metrics', { headers: apiHeaders }),
+                    fetch('http://44.214.105.143:5000/api/admin/doctors', { headers: apiHeaders }),
+                    fetch('http://44.214.105.143:5000/api/admin/patients', { headers: apiHeaders }),
+                    fetch('http://44.214.105.143:5000/api/admin/audit-logs', { headers: apiHeaders })
                 ]);
                 
                 const metrics = await metricsRes.json();
@@ -277,7 +267,8 @@
         // --- Doctor Actions ---
         async function updateDoctorStatus(id, action) {
             try {
-                const res = await fetch(`http://localhost:5000/api/admin/doctors/${id}/${action}`, {
+                // UPDATE: Mengarah ke IP Public Frontend AWS Port 5000
+                const res = await fetch(`http://44.214.105.143:5000/api/admin/doctors/${id}/${action}`, {
                     method: 'POST',
                     headers: apiHeaders
                 });
@@ -288,7 +279,8 @@
         async function deleteDoctor(id) {
             if(!confirm('Yakin ingin menghapus dokter ini? Semua data rekam medis yang terikat mungkin akan terdampak.')) return;
             try {
-                const res = await fetch(`http://localhost:5000/api/admin/doctors/${id}`, {
+                // UPDATE: Mengarah ke IP Public Frontend AWS Port 5000
+                const res = await fetch(`http://44.214.105.143:5000/api/admin/doctors/${id}`, {
                     method: 'DELETE',
                     headers: apiHeaders
                 });
@@ -323,7 +315,8 @@
             const email = document.getElementById('docEmail').value;
             const password = document.getElementById('docPassword').value;
 
-            const url = id ? `http://localhost:5000/api/admin/doctors/${id}` : 'http://localhost:5000/api/admin/doctors';
+            // UPDATE: Mengarah ke IP Public Frontend AWS Port 5000
+            const url = id ? `http://44.214.105.143:5000/api/admin/doctors/${id}` : 'http://44.214.105.143:5000/api/admin/doctors';
             const method = id ? 'PUT' : 'POST';
             const body = { name, email };
             if (password) body.password = password;
@@ -350,7 +343,8 @@
         async function deletePatient(id) {
             if(!confirm('Yakin ingin menghapus pasien ini? Peringatan: Seluruh data rekam medis dan histori chat pasien ini akan terhapus juga secara permanen.')) return;
             try {
-                const res = await fetch(`http://localhost:5000/api/admin/patients/${id}`, {
+                // UPDATE: Mengarah ke IP Public Frontend AWS Port 5000
+                const res = await fetch(`http://44.214.105.143:5000/api/admin/patients/${id}`, {
                     method: 'DELETE',
                     headers: apiHeaders
                 });
@@ -385,7 +379,8 @@
             const email = document.getElementById('patEmail').value;
             const password = document.getElementById('patPassword').value;
 
-            const url = id ? `http://localhost:5000/api/admin/patients/${id}` : 'http://localhost:5000/api/admin/patients';
+            // UPDATE: Mengarah ke IP Public Frontend AWS Port 5000
+            const url = id ? `http://44.214.105.143:5000/api/admin/patients/${id}` : 'http://44.214.105.143:5000/api/admin/patients';
             const method = id ? 'PUT' : 'POST';
             const body = { name, email };
             if (password) body.password = password;
@@ -407,7 +402,6 @@
                 alert('Gagal menyimpan data');
             }
         });
-
 
         loadAdminData();
         setInterval(loadAdminData, 10000);
