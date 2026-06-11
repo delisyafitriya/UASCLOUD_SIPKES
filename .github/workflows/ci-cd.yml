@@ -30,11 +30,23 @@ jobs:
         working-directory: ./backend
         run: npm test --if-present
 
-      - name: Build Backend Docker Image
-        run: docker build -t sipkes-backend:latest ./backend
+      - name: Build & Save Docker Images (Anti-Offline)
+        run: |
+          # Rakit image di GitHub Actions (yang punya internet kencang)
+          docker build -t sipkes-backend:latest ./backend
+          docker build -t sipkes-frontend:latest ./frontend
+          
+          # Bungkus image hasil rakitan menjadi file arsip mentah (.tar)
+          docker save sipkes-backend:latest -o backend-image.tar
+          docker save sipkes-frontend:latest -o frontend-image.tar
 
-      - name: Build Frontend Docker Image
-        run: docker build -t sipkes-frontend:latest ./frontend
+      - name: Upload Images as Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-images
+          path: |
+            backend-image.tar
+            frontend-image.tar
 
       - name: Create temporary env file for Docker Compose Validation
         run: |
@@ -51,9 +63,6 @@ jobs:
       - name: Validate Docker Compose File
         run: docker compose -f docker-compose.yaml config
 
-      - name: CI/CD Status
-        run: echo "Build, test, dockerize, and docker-compose validation completed successfully."
-
   deploy-to-aws:
     needs: build-test-dockerize
     runs-on: ubuntu-latest
@@ -61,13 +70,17 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Download Built Images from Previous Job
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-images
+
       - name: Setup Kunci SSH & Konfigurasi Proxy Jump Otomatis
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           
-          # Membuat file konfigurasi SSH agar GitHub otomatis tahu cara melompat ke Backend privat
           cat <<EOF > ~/.ssh/config
           Host frontend
             HostName ${{ secrets.FRONTEND_PUBLIC_IP }}
@@ -87,24 +100,36 @@ jobs:
 
       - name: 🚀 Deploy Frontend ke EC2 Public
         run: |
+          # 1. Kirim file kodingan utama
+          ssh frontend "mkdir -p ~/sipkes-app"
+          tar -czf - . | ssh frontend "cd ~/sipkes-app && tar -xzf -"
+          
+          # 2. Oper image frontend hasil build GitHub langsung ke server Frontend
+          cat frontend-image.tar | ssh frontend "docker load"
+          
+          # 3. Jalankan container secara offline tanpa build ulang
           ssh frontend "
-            mkdir -p ~/sipkes-app && cd ~/sipkes-app
-            if [ -d ".git" ]; then git pull origin main; else git clone https://github.com/${{ github.repository }}.git .; fi
+            cd ~/sipkes-app
             echo 'PORT=3000' > .env
             cd frontend
-            docker compose up -d --build
+            # Menggunakan perintah run/up tanpa flag --build agar menggunakan image jadi
+            docker compose up -d
           "
 
-      - name: 🔐 Deploy Backend & Database ke EC2 Private (Metode Estafet)
+      - name: 🔐 Deploy Backend & Database ke EC2 Private (Full Offline)
         run: |
-          # 1. Kirim folder kodingan dari GitHub langsung ke Backend privat lewat jembatan otomatis
-          tar -czf - . | ssh backend "mkdir -p ~/sipkes-app && cd ~/sipkes-app && tar -xzf -"
+          # 1. Kirim file kodingan utama ke Backend Privat via Proxy Jump
+          ssh backend "mkdir -p ~/sipkes-app"
+          tar -czf - . | ssh backend "cd ~/sipkes-app && tar -xzf -"
           
-          # 2. TRIK ESTAFET: GitHub menyuruh Frontend mendownload MySQL, lalu GitHub yang menarik dan mengoper ke Backend
+          # 2. Ambil Image MySQL resmi dari internet via Frontend, lalu oper ke Backend
           ssh frontend "docker pull mysql:8.0.33"
           ssh frontend "docker save mysql:8.0.33" | ssh backend "docker load"
           
-          # 3. Nyalakan Docker di Backend privat secara offline menggunakan image yang sudah dioper
+          # 3. Oper Image Backend hasil build GitHub langsung ke server Backend Privat
+          cat backend-image.tar | ssh backend "docker load"
+          
+          # 4. Nyalakan sistem di Backend privat secara total offline
           ssh backend "
             cd ~/sipkes-app
             
@@ -119,5 +144,7 @@ jobs:
             echo 'GCS_KEYFILE=./gcp-service-account.json' >> .env
             
             cd backend
+            # Jalankan secara langsung tanpa build ulang karena image mentah sudah di-load
             docker compose up -d
           "
+          
