@@ -1,40 +1,39 @@
-const { v2: cloudinary } = require('cloudinary');
-const streamifier = require('streamifier');
+const cloudinary = require('cloudinary').v2;
+const streamifier = require('streamifier'); // Pastikan package ini ada, jika tidak ada, jalankan: npm install streamifier
 
+// Mengonfigurasi kredensial Cloudinary dari file .env Anda
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-function uploadToCloudinary(file) {
+const uploadToCloudinary = (file) => {
   return new Promise((resolve, reject) => {
-    if (
-      !process.env.CLOUDINARY_CLOUD_NAME ||
-      !process.env.CLOUDINARY_API_KEY ||
-      !process.env.CLOUDINARY_API_SECRET
-    ) {
+    // Memeriksa apakah token di .env berhasil terbaca
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      console.error("Kredensial Cloudinary tidak ditemukan di berkas .env!");
       return resolve(null);
     }
 
-    const uploadStream = cloudinary.uploader.upload_stream(
+    // Mengubah buffer memori multer menjadi stream data untuk dikirim ke Cloudinary
+    let stream = cloudinary.uploader.upload_stream(
       {
-        folder: 'sipkes/medical-documents',
-        resource_type: 'auto',
-        public_id: `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`,
+        folder: 'sipkes_cdn_documents',
+        resource_type: 'auto' // Menangani gambar maupun file PDF secara otomatis
       },
       (error, result) => {
-        if (error) return reject(error);
-
-        resolve({
-          url: result.secure_url,
-          public_id: result.public_id,
-        });
+        if (error) {
+          console.error("Gagal mengirim aset ke Cloudinary:", error);
+          reject(error);
+        } else {
+          resolve(result);
+        }
       }
     );
 
-    streamifier.createReadStream(file.buffer).pipe(uploadStream);
+    streamifier.createReadStream(file.buffer).pipe(stream);
   });
-}
+};
 
 module.exports = { uploadToCloudinary };
