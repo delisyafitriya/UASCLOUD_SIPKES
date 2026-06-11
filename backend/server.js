@@ -24,6 +24,16 @@ if (!fs.existsSync(uploadDir)) {
 }
 app.use('/uploads', express.static(uploadDir));
 
+// Health Check Monitoring Endpoint
+app.get('/api/health', (req, res) => {
+    res.json({
+        success: true,
+        status: 'OK',
+        message: 'SIPKES API is running',
+        timestamp: new Date()
+    });
+});
+
 // Mount Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/patient', patientRoutes);
