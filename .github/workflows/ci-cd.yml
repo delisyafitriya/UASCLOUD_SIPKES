@@ -95,18 +95,16 @@ jobs:
             docker compose up -d --build
           "
 
-      - name: 🔐 Deploy Backend & Database ke EC2 Private
+      - name: 🔐 Deploy Backend & Database ke EC2 Private (Metode Estafet)
         run: |
           # 1. Kirim folder kodingan dari GitHub langsung ke Backend privat lewat jembatan otomatis
           tar -czf - . | ssh backend "mkdir -p ~/sipkes-app && cd ~/sipkes-app && tar -xzf -"
           
-          # 2. TRIK OFFLINE: Frontend download Image MySQL, lalu oper secara lokal ke Backend privat lewat jalur internal
-          ssh frontend "
-            docker pull mysql:8.0.33
-            docker save mysql:8.0.33 | ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.BACKEND_PRIVATE_IP }} 'docker load'
-          "
+          # 2. TRIK ESTAFET: GitHub menyuruh Frontend mendownload MySQL, lalu GitHub yang menarik dan mengoper ke Backend
+          ssh frontend "docker pull mysql:8.0.33"
+          ssh frontend "docker save mysql:8.0.33" | ssh backend "docker load"
           
-          # 3. Nyalakan Docker di Backend privat menggunakan image yang sudah dioper
+          # 3. Nyalakan Docker di Backend privat secara offline menggunakan image yang sudah dioper
           ssh backend "
             cd ~/sipkes-app
             
