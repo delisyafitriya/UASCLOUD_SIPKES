@@ -101,11 +101,9 @@ jobs:
           cat frontend-image.tar | ssh frontend "docker load"
           
           ssh frontend "
-            # Hentikan kontainer lama jika ada agar tidak bentrok port
             docker stop sipkes-frontend-container || true
             docker rm sipkes-frontend-container || true
             
-            # SOLUSI BRUTAL: Jalankan langsung pakai docker run, bypass compose!
             docker run -d \
               --name sipkes-frontend-container \
               -p 3000:3000 \
@@ -126,11 +124,11 @@ jobs:
           ssh backend "
             cd ~/sipkes-app
             
-            # Ubah perintah build menjadi image agar compose valid di backend
             sed -i 's|build: ./frontend|image: uascloud_sipkes-frontend:latest|g' docker-compose.yaml
             sed -i 's|build: ./backend|image: uascloud_sipkes-backend:latest|g' docker-compose.yaml
             
-            echo 'DB_HOST=database-mysql' > .env
+            # Memastikan DB_HOST mengarah ke container 'database' lokal
+            echo 'DB_HOST=database' > .env
             echo 'DB_USER=root' >> .env
             echo 'DB_PASSWORD=oop' >> .env
             echo 'DB_NAME=health_db' >> .env
@@ -141,6 +139,6 @@ jobs:
             echo 'GCS_KEYFILE=./gcp-service-account.json' >> .env
             
             cd backend
-            # Jalankan service backend dan databasenya saja secara offline
-            docker compose up -d backend database-mysql
+            # PERBAIKAN FIXED: Mengubah 'database-mysql' menjadi 'database' sesuai struktur kalian
+            docker compose up -d backend database
           "
