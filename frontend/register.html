@@ -50,7 +50,7 @@
                 </div>
             </div>
 
-            <div id="message" class="text-sm hidden font-medium text-center py-2 rounded-lg"></div>
+            <div id="message" class="text-sm hidden font-medium text-center py-2 rounded-lg px-2"></div>
 
             <button type="submit" class="w-full py-3 px-4 rounded-lg shadow-md text-white font-semibold bg-clinical hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-clinical transition-all">
                 Daftar
@@ -82,10 +82,15 @@
             const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const role = 'patient'; // Forced to patient
+            const role = 'patient'; // Dipaksa sebagai pasien otomatis
             const msgDiv = document.getElementById('message');
 
+            // Reset status tampilan pesan tiap tombol diklik
+            msgDiv.classList.add('hidden');
+            msgDiv.className = "text-sm hidden font-medium text-center py-2 rounded-lg px-2";
+
             try {
+                // Endpoint diarahkan ke port jembatan darurat proxy socat di EC2 Public
                 const response = await fetch('http://44.214.105.143:5000/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -94,18 +99,19 @@
 
                 const data = await response.json();
 
-                msgDiv.classList.remove('hidden', 'bg-red-50', 'text-crimson', 'bg-cerulean-50', 'text-cerulean-700');
-                if (data.success) {
+                msgDiv.classList.remove('hidden');
+                if (response.ok && data.success) {
                     msgDiv.textContent = 'Registrasi berhasil! Anda sekarang dapat masuk.';
-                    msgDiv.classList.add('bg-cerulean-50', 'text-cerulean-700');
+                    msgDiv.classList.add('bg-sky-50', 'text-sky-700');
                     document.getElementById('registerForm').reset();
                 } else {
-                    msgDiv.textContent = data.message;
+                    msgDiv.textContent = data.message || 'Gagal melakukan registrasi.';
                     msgDiv.classList.add('bg-red-50', 'text-crimson');
                 }
             } catch (error) {
-                msgDiv.classList.remove('hidden', 'bg-cerulean-50', 'text-cerulean-700');
-                msgDiv.textContent = 'Gagal terhubung ke server.';
+                console.error('Detail Error Registrasi:', error);
+                msgDiv.classList.remove('hidden');
+                msgDiv.textContent = 'Gagal terhubung ke server. Periksa jaringan Anda atau CORS backend.';
                 msgDiv.classList.add('bg-red-50', 'text-crimson');
             }
         });

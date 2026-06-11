@@ -45,7 +45,7 @@
                 </div>
             </div>
 
-            <div id="errorMessage" class="text-crimson text-sm hidden font-medium text-center bg-red-50 py-2 rounded-lg"></div>
+            <div id="errorMessage" class="text-crimson text-sm hidden font-medium text-center bg-red-50 py-2 rounded-lg px-2"></div>
 
             <button type="submit" class="w-full py-3 px-4 rounded-lg shadow-md text-white font-semibold bg-clinical hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-clinical transition-all">
                 Masuk
@@ -77,9 +77,11 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('errorMessage');
+            
+            errorDiv.classList.add('hidden'); // Reset status error tiap kali tombol diklik
 
             try {
-                // GANTI BARIS 77 JADI SEPERTI INI:
+                // Menggunakan IP Public EC2 Frontend yang bertindak sebagai jembatan Proxy Socat
                 const response = await fetch('http://44.214.105.143:5000/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -88,7 +90,7 @@
 
                 const data = await response.json();
 
-                if (data.success) {
+                if (response.ok && data.success) {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
                     
@@ -104,11 +106,12 @@
                     else if (data.user.role === 'doctor') window.location.href = 'dashboard_doctor.html';
                     else if (data.user.role === 'admin') window.location.href = 'dashboard_admin.html';
                 } else {
-                    errorDiv.textContent = data.message;
+                    errorDiv.textContent = data.message || 'Email atau kata sandi salah.';
                     errorDiv.classList.remove('hidden');
                 }
             } catch (error) {
-                errorDiv.textContent = 'Gagal terhubung ke server.';
+                console.error('Detail Error:', error); // Memunculkan alasan log error asli di Console Browser (F12)
+                errorDiv.textContent = 'Gagal terhubung ke server. Pastikan jembatan proxy / CORS sudah aktif.';
                 errorDiv.classList.remove('hidden');
             }
         });
