@@ -1,0 +1,45 @@
+services:
+  # --- DATABASE CONTAINER ---
+  db:
+    platform: linux/amd64  # <-- Tetap pastikan ini ada di baris paling atas service db
+    image: mysql:8.0.33    # <-- Kita ganti versinya sedikit agar Docker terpaksa download baru
+    container_name: chatbot_db
+    restart: always
+    env_file:
+      - .env
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # --- BACKEND CONTAINER ---
+  backend:
+    build: ./backend
+    container_name: chatbot_backend
+    restart: always
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - HF_TOKEN=${HF_TOKEN}
+    depends_on:
+      - db
+
+  # --- FRONTEND CONTAINER ---
+  frontend:
+    build: ./frontend
+    container_name: chatbot_frontend
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
