@@ -98,22 +98,19 @@ jobs:
 
       - name: 🚀 Deploy Frontend ke EC2 Public
         run: |
-          ssh frontend "mkdir -p ~/sipkes-app"
-          tar -czf - . | ssh frontend "cd ~/sipkes-app && tar -xzf -"
-          
           cat frontend-image.tar | ssh frontend "docker load"
           
           ssh frontend "
-            cd ~/sipkes-app
-            echo 'PORT=3000' > .env
+            # Hentikan kontainer lama jika ada agar tidak bentrok port
+            docker stop sipkes-frontend-container || true
+            docker rm sipkes-frontend-container || true
             
-            # Ubah perintah build menjadi image agar compose valid
-            sed -i 's|build: ./frontend|image: uascloud_sipkes-frontend:latest|g' docker-compose.yaml
-            sed -i 's|build: ./backend|image: uascloud_sipkes-backend:latest|g' docker-compose.yaml
-            
-            cd frontend
-            # PERBAIKAN: Hanya jalankan service 'frontend' saja di server ini!
-            docker compose up -d frontend
+            # SOLUSI BRUTAL: Jalankan langsung pakai docker run, bypass compose!
+            docker run -d \
+              --name sipkes-frontend-container \
+              -p 3000:3000 \
+              -e PORT=3000 \
+              uascloud_sipkes-frontend:latest
           "
 
       - name: 🔐 Deploy Backend & Database ke EC2 Private (Full Offline)
@@ -129,7 +126,7 @@ jobs:
           ssh backend "
             cd ~/sipkes-app
             
-            # Ubah perintah build menjadi image agar compose valid
+            # Ubah perintah build menjadi image agar compose valid di backend
             sed -i 's|build: ./frontend|image: uascloud_sipkes-frontend:latest|g' docker-compose.yaml
             sed -i 's|build: ./backend|image: uascloud_sipkes-backend:latest|g' docker-compose.yaml
             
@@ -144,6 +141,6 @@ jobs:
             echo 'GCS_KEYFILE=./gcp-service-account.json' >> .env
             
             cd backend
-            # PERBAIKAN: Hanya jalankan service 'backend' dan 'database' saja di server privat ini!
+            # Jalankan service backend dan databasenya saja secara offline
             docker compose up -d backend database-mysql
           "
