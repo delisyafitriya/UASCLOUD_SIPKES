@@ -107,12 +107,13 @@ jobs:
             cd ~/sipkes-app
             echo 'PORT=3000' > .env
             
-            # TRIK BARU: Ubah build menjadi image secara otomatis agar compose valid
+            # Ubah perintah build menjadi image agar compose valid
             sed -i 's|build: ./frontend|image: uascloud_sipkes-frontend:latest|g' docker-compose.yaml
             sed -i 's|build: ./backend|image: uascloud_sipkes-backend:latest|g' docker-compose.yaml
             
             cd frontend
-            docker compose up -d
+            # PERBAIKAN: Hanya jalankan service 'frontend' saja di server ini!
+            docker compose up -d frontend
           "
 
       - name: 🔐 Deploy Backend & Database ke EC2 Private (Full Offline)
@@ -128,7 +129,7 @@ jobs:
           ssh backend "
             cd ~/sipkes-app
             
-            # TRIK BARU: Ubah build menjadi image secara otomatis agar compose valid
+            # Ubah perintah build menjadi image agar compose valid
             sed -i 's|build: ./frontend|image: uascloud_sipkes-frontend:latest|g' docker-compose.yaml
             sed -i 's|build: ./backend|image: uascloud_sipkes-backend:latest|g' docker-compose.yaml
             
@@ -143,5 +144,6 @@ jobs:
             echo 'GCS_KEYFILE=./gcp-service-account.json' >> .env
             
             cd backend
-            docker compose up -d
+            # PERBAIKAN: Hanya jalankan service 'backend' dan 'database' saja di server privat ini!
+            docker compose up -d backend database-mysql
           "
