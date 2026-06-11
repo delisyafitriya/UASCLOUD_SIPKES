@@ -36,7 +36,7 @@ jobs:
       - name: Build Frontend Docker Image
         run: docker build -t sipkes-frontend:latest ./frontend
 
-      - name: Create temporary env file for Docker Compose
+      - name: Create temporary env file for Docker Compose Validation
         run: |
           echo "DB_HOST=database" >> .env
           echo "DB_USER=root" >> .env
@@ -55,7 +55,7 @@ jobs:
         run: echo "Build, test, dockerize, and docker-compose validation completed successfully."
 
   deploy-to-aws:
-    needs: build-test-dockerize # Job ini hanya jalan kalau build & test di atas sukses/hijau
+    needs: build-test-dockerize # Langkah ini hanya jalan jika proses build & test di atas sukses
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -66,7 +66,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          # Mendaftarkan sidik jari agar tidak terhadang prompt yes/no saat melakukan deploy
+          # Daftarkan sidik jari server agar tidak terhadang prompt SSH yes/no
           ssh-keyscan -H ${{ secrets.FRONTEND_PUBLIC_IP }} >> ~/.ssh/known_hosts
 
       - name: 🚀 Deploy Frontend ke EC2 Public
@@ -74,18 +74,36 @@ jobs:
           ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }} "
             mkdir -p ~/sipkes-app && cd ~/sipkes-app
             if [ -d ".git" ]; then git pull origin main; else git clone https://github.com/${{ github.repository }}.git .; fi
+            
+            # Membuat file .env otomatis di Frontend
+            echo 'PORT=3000' > .env
+            
             cd frontend
             docker compose up -d --build
           "
 
       - name: 🔐 Deploy Backend & Database ke EC2 Private (Proxy Jump)
         run: |
-          # Perintah melompat lewat Frontend untuk masuk ke Backend yang terisolasi dari internet
+          # Perintah melompat lewat Frontend untuk masuk ke Backend yang tidak punya internet
           ssh -i ~/.ssh/id_rsa \
           -o ProxyCommand="ssh -i ~/.ssh/id_rsa -W %h:%p ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }}" \
           ubuntu@${{ secrets.BACKEND_PRIVATE_IP }} "
             mkdir -p ~/sipkes-app && cd ~/sipkes-app
-            if [ -d ".git" ]; then git pull origin main; else git clone https://github.com/${{ github.repository }}.git .; fi
+            
+            # Trik Cerdas: Salin source code secara lokal dari folder Frontend karena Backend tidak bisa internetan
+            ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@10.1.1.28 'cd ~/sipkes-app && tar -czf - .' | tar -xzf -
+            
+            # Otomatis buat file .env langsung di dalam server Backend sebelum Docker menyala
+            echo 'DB_HOST=database-mysql' > .env
+            echo 'DB_USER=root' >> .env
+            echo 'DB_PASSWORD=oop' >> .env
+            echo 'DB_NAME=health_db' >> .env
+            echo 'JWT_SECRET=dummy_secret_for_ci' >> .env
+            echo 'HF_TOKEN=dummy_hf_token_for_ci' >> .env
+            echo 'PORT=5000' >> .env
+            echo 'GCS_BUCKET_NAME=sipkes-medical-documents' >> .env
+            echo 'GCS_KEYFILE=./gcp-service-account.json' >> .env
+            
             cd backend
             docker compose up -d --build
           "
