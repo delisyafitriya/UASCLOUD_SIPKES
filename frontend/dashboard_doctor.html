@@ -61,7 +61,7 @@
                     </tr>
                 </thead>
                 <tbody id="patientTableBody" class="divide-y divide-slate-100">
-                    </tbody>
+                </tbody>
             </table>
         </div>
     </div>
@@ -126,7 +126,6 @@
         let chartInstance = null;
 
         async function loadPatients() {
-            // UPDATE: Mengarah ke IP AWS Port 5000 Proxy
             const res = await fetch('http://44.214.105.143:5000/api/doctor/patients', { headers: apiHeaders });
             const data = await res.json();
             if (data.success) {
@@ -135,7 +134,6 @@
                 
                 let rowsHtml = '';
                 for (let p of data.patients) {
-                    // UPDATE: Mengarah ke IP AWS Port 5000 Proxy
                     const rRes = await fetch(`http://44.214.105.143:5000/api/doctor/patient/${p.id}`, { headers: apiHeaders });
                     const rData = await rRes.json();
                     let statusHtml = '<span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-semibold">Tidak Ada Data</span>';
@@ -171,20 +169,26 @@
             document.getElementById('drNotes').value = '';
             document.getElementById('selectedRecordId').value = '';
 
-            // UPDATE: Mengarah ke IP AWS Port 5000 Proxy
             const res = await fetch(`http://44.214.105.143:5000/api/doctor/patient/${id}`, { headers: apiHeaders });
             const data = await res.json();
             
             if (data.success) {
                 renderModalChart(data.records);
                 
+                // BERHASIL DIPERBAIKI: Logika cerdas untuk routing file Cloudinary vs Lokal
                 const docsList = document.getElementById('docsList');
-                docsList.innerHTML = data.documents.map(d => `
-                    <div class="flex items-center justify-between p-2 bg-slate-50 border border-slate-100 rounded text-xs hover:border-azure transition">
-                        <span class="truncate w-32 font-medium text-clinical"><i class="fas fa-file-pdf text-azure mr-2"></i>${d.document_name}</span>
-                        <a href="http://44.214.105.143:5000${d.storage_url}" target="_blank" class="bg-slate-200 text-clinical px-2 py-1 rounded hover:bg-clinical hover:text-white transition font-semibold">Buka</a>
-                    </div>
-                `).join('') || '<p class="text-xs text-slate-400">Tidak ada dokumen.</p>';
+                docsList.innerHTML = data.documents.map(d => {
+                    const fullUrl = d.storage_url.startsWith('http') 
+                        ? d.storage_url 
+                        : `http://44.214.105.143:5000${d.storage_url}`;
+
+                    return `
+                        <div class="flex items-center justify-between p-2 bg-slate-50 border border-slate-100 rounded text-xs hover:border-azure transition">
+                            <span class="truncate w-32 font-medium text-clinical"><i class="fas fa-file-pdf text-azure mr-2"></i>${d.document_name}</span>
+                            <a href="${fullUrl}" target="_blank" class="bg-slate-200 text-clinical px-2 py-1 rounded hover:bg-clinical hover:text-white transition font-semibold">Buka</a>
+                        </div>
+                    `;
+                }).join('') || '<p class="text-xs text-slate-400">Tidak ada dokumen.</p>';
 
                 const recordsList = document.getElementById('recordsList');
                 recordsList.innerHTML = data.records.map(r => `
@@ -238,7 +242,6 @@
             if (!id) return alert('Pilih salah satu catatan dari Riwayat Kesehatan terlebih dahulu.');
 
             try {
-                // UPDATE: Mengarah ke IP AWS Port 5000 Proxy
                 const res = await fetch(`http://44.214.105.143:5000/api/doctor/record/${id}/notes`, {
                     method: 'POST',
                     headers: { ...apiHeaders, 'Content-Type': 'application/json' },
